@@ -13,15 +13,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class CdnCdnProgress(
-    val cdnName: String = "",
-    val progress: Float = 0f,
-    val speedMbps: Double = 0.0
-)
-
 sealed class CdnTestPhase {
     data object Idle : CdnTestPhase()
-    data class Testing(val currentCdn: String, val progress: Float, val currentSpeed: Double) : CdnTestPhase()
+    data class Testing(
+        val currentCdn: String,
+        val currentIndex: Int,
+        val totalCount: Int,
+        val progress: Float,
+        val currentSpeed: Double
+    ) : CdnTestPhase()
     data class Completed(val result: AggregatedCdnResult) : CdnTestPhase()
     data class Error(val message: String) : CdnTestPhase()
 }
@@ -40,6 +40,11 @@ class CdnTestViewModel(context: Context) : ViewModel() {
     val cdnResults: StateFlow<List<CdnTestResult>> = _cdnResults.asStateFlow()
 
     private var testJob: Job? = null
+    private var cdnUrlList: List<String> = emptyList()
+
+    init {
+        cdnUrlList = engine.getCdnEndpoints()
+    }
 
     fun setFileSize(mb: Int) {
         _fileSizeMB.value = mb.coerceIn(1, 50)
@@ -49,16 +54,25 @@ class CdnTestViewModel(context: Context) : ViewModel() {
         if (testJob?.isActive == true) return
         _phase.value = CdnTestPhase.Idle
         _cdnResults.value = emptyList()
+        val totalCdns = cdnUrlList.size
+
         testJob = viewModelScope.launch {
             try {
                 val size = _fileSizeMB.value
                 val result = engine.runAggregatedCdnTest(size) { cdnName, progress, speed ->
-                    _phase.value = CdnTestPhase.Testing(cdnName, progress, speed)
+                    val currentIndex = _cdnResults.value.size
+                    _phase.value = CdnTestPhase.Testing(
+                        currentCdn = cdnName,
+                        currentIndex = currentIndex,
+                        totalCount = totalCdns,
+                        progress = progress,
+                        currentSpeed = speed
+                    )
                 }
                 _cdnResults.value = result.results
                 _phase.value = CdnTestPhase.Completed(result)
             } catch (e: Exception) {
-                _phase.value = CdnTestPhase.Error(e.message ?: "Test failed")
+                _phase.value = CdnTestPhase.Error(e.message ?: "Test failed. Check your network connection.")
             }
         }
     }

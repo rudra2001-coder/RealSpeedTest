@@ -64,37 +64,30 @@ fun CdnTestScreen(
                 .padding(paddingValues)
                 .background(LightBackground)
         ) {
-            when (phase) {
+            when (val p = phase) {
                 is CdnTestPhase.Idle -> IdleContent(
                     fileSizeMB = fileSizeMB,
                     onFileSizeChange = { viewModel.setFileSize(it) },
                     onStart = { viewModel.startTest() }
                 )
-                is CdnTestPhase.Testing -> {
-                    val testing = phase as CdnTestPhase.Testing
-                    TestingContent(
-                        currentCdn = testing.currentCdn,
-                        progress = testing.progress,
-                        currentSpeed = testing.currentSpeed,
-                        resultsSoFar = cdnResults,
-                        onCancel = { viewModel.cancelTest() }
-                    )
-                }
-                is CdnTestPhase.Completed -> {
-                    val result = (phase as CdnTestPhase.Completed).result
-                    CompletedContent(
-                        result = result,
-                        onRestart = { viewModel.reset() },
-                        onBack = onBack
-                    )
-                }
-                is CdnTestPhase.Error -> {
-                    val error = phase as CdnTestPhase.Error
-                    ErrorContent(
-                        message = error.message,
-                        onRetry = { viewModel.reset() }
-                    )
-                }
+                is CdnTestPhase.Testing -> TestingContent(
+                    currentCdn = p.currentCdn,
+                    currentIndex = p.currentIndex,
+                    totalCount = p.totalCount,
+                    progress = p.progress,
+                    currentSpeed = p.currentSpeed,
+                    resultsSoFar = cdnResults,
+                    onCancel = { viewModel.cancelTest() }
+                )
+                is CdnTestPhase.Completed -> CompletedContent(
+                    result = p.result,
+                    onRestart = { viewModel.reset() },
+                    onBack = onBack
+                )
+                is CdnTestPhase.Error -> ErrorContent(
+                    message = p.message,
+                    onRetry = { viewModel.reset() }
+                )
             }
         }
     }
@@ -130,31 +123,15 @@ private fun IdleContent(
                         .background(Indigo700.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Default.Dns,
-                        null,
-                        tint = Indigo700,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    Icon(Icons.Default.Dns, null, tint = Indigo700, modifier = Modifier.size(32.dp))
                 }
 
                 Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = "CDN Performance Test",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.DarkGray
-                )
-
+                Text("CDN Performance Test", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
                 Spacer(Modifier.height(8.dp))
-
                 Text(
                     text = "Test all CDN endpoints one by one with a custom file size.\nGet per-CDN and aggregated download/upload/latency results.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray500,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 20.sp
+                    style = MaterialTheme.typography.bodyMedium, color = Gray500, textAlign = TextAlign.Center, lineHeight = 20.sp
                 )
             }
         }
@@ -168,55 +145,29 @@ private fun IdleContent(
             elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "Test File Size",
-                    fontWeight = FontWeight.SemiBold,
-                    color = Gray600,
-                    fontSize = 14.sp
-                )
-
+                Text("Test File Size Per CDN", fontWeight = FontWeight.SemiBold, color = Gray600, fontSize = 14.sp)
                 Spacer(Modifier.height(4.dp))
-
-                Text(
-                    text = "$fileSizeMB MB",
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Indigo700,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
+                Text("$fileSizeMB MB", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Indigo700, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
-
                 Slider(
                     value = fileSizeMB.toFloat(),
-                        onValueChange = { onFileSizeChange((it + 0.5f).toInt()) },
-                    valueRange = 1f..50f,
-                    steps = 48,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Indigo700,
-                        activeTrackColor = Indigo700,
-                        inactiveTrackColor = Gray200
-                    )
+                    onValueChange = { onFileSizeChange((it + 0.5f).toInt()) },
+                    valueRange = 1f..50f, steps = 48,
+                    colors = SliderDefaults.colors(thumbColor = Indigo700, activeTrackColor = Indigo700, inactiveTrackColor = Gray200)
                 )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("1 MB", fontSize = 12.sp, color = Gray500)
                     Text("25 MB", fontSize = 12.sp, color = Gray500)
                     Text("50 MB", fontSize = 12.sp, color = Gray500)
                 }
-
-                Spacer(Modifier.height(16.dp))
-
+                Spacer(Modifier.height(12.dp))
                 Text(
-                    text = "Larger files give more accurate results but take longer to test.",
-                    fontSize = 12.sp,
-                    color = Gray400,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    text = when {
+                        fileSizeMB <= 2 -> "Quick test — ~3s per CDN"
+                        fileSizeMB <= 10 -> "Balanced test — ~7s per CDN"
+                        else -> "Thorough test — ~12s per CDN"
+                    },
+                    fontSize = 12.sp, color = Gray400, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -225,9 +176,7 @@ private fun IdleContent(
 
         Button(
             onClick = onStart,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
+            modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Indigo700)
         ) {
@@ -241,6 +190,8 @@ private fun IdleContent(
 @Composable
 private fun TestingContent(
     currentCdn: String,
+    currentIndex: Int,
+    totalCount: Int,
     progress: Float,
     currentSpeed: Double,
     resultsSoFar: List<CdnTestResult>,
@@ -248,124 +199,58 @@ private fun TestingContent(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
+        initialValue = 0.3f, targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(animation = tween(800, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse),
         label = "pulse"
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
-    ) {
+    Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Indigo700.copy(alpha = 0.08f)
-            ),
+            colors = CardDefaults.cardColors(containerColor = Indigo700.copy(alpha = 0.08f)),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Indigo700.copy(alpha = pulseAlpha)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(32.dp),
-                        color = Color.White,
-                        strokeWidth = 3.dp
-                    )
+            Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(Indigo700.copy(alpha = pulseAlpha)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Color.White, strokeWidth = 3.dp)
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text("Testing CDN $currentIndex/$totalCount", fontSize = 14.sp, color = Gray500, fontWeight = FontWeight.Medium)
+                        Text(currentCdn, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Indigo700)
+                    }
                 }
-
                 Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = "Testing CDN...",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.DarkGray
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                Text(
-                    text = currentCdn,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Indigo700
-                )
-
-                Spacer(Modifier.height(12.dp))
-
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = Indigo700,
-                    trackColor = Gray200
+                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                    color = Indigo700, trackColor = Gray200
                 )
-
                 Spacer(Modifier.height(8.dp))
-
-                Text(
-                    text = "${(progress * 100).toInt()}%",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Gray600
-                )
-
+                Text("${(progress * 100).toInt()}%", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Gray600)
                 if (currentSpeed > 0) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = "${String.format("%.1f", currentSpeed)} Mbps",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Green700
-                    )
+                    Text("${String.format("%.1f", currentSpeed)} Mbps", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Green700)
                 }
             }
         }
 
         Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = "Completed (${resultsSoFar.size})",
-            fontWeight = FontWeight.SemiBold,
-            color = Gray600,
-            fontSize = 14.sp
-        )
-
+        Text("Completed (${resultsSoFar.size})", fontWeight = FontWeight.SemiBold, color = Gray600, fontSize = 14.sp)
         Spacer(Modifier.height(8.dp))
 
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(resultsSoFar) { result ->
-                CdnResultRow(result = result)
-            }
+        LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(resultsSoFar) { result -> CdnResultRow(result = result) }
         }
 
         Spacer(Modifier.height(12.dp))
-
         OutlinedButton(
             onClick = onCancel,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(44.dp),
+            modifier = Modifier.fillMaxWidth().height(44.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Red500)
         ) {
@@ -382,188 +267,137 @@ private fun CompletedContent(
     onRestart: () -> Unit,
     onBack: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(vertical = 20.dp)
     ) {
-        Text(
-            text = "CDN Test Results",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.DarkGray,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = "Aggregated Results",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Color.DarkGray
-                )
-
-                Spacer(Modifier.height(4.dp))
-
-                Text(
-                    text = "File size: ${result.testFileSizeMB} MB | ${result.results.size} CDNs tested",
-                    fontSize = 13.sp,
-                    color = Gray500
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+        // === GALACTIC VIEW: Aggregated Results ===
+        item(key = "galactic") {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.verticalGradient(listOf(Indigo700, Indigo700.copy(alpha = 0.85f), Indigo700.copy(alpha = 0.7f))),
+                            RoundedCornerShape(24.dp)
+                        )
                 ) {
-                    AggregatedStat(
-                        label = "Total Download",
-                        value = String.format("%.1f", result.totalDownloadMbps),
-                        unit = "Mbps",
-                        color = Green700
-                    )
-                    AggregatedStat(
-                        label = "Upload",
-                        value = String.format("%.1f", result.totalUploadMbps),
-                        unit = "Mbps",
-                        color = Blue700
-                    )
-                    AggregatedStat(
-                        label = "Avg Latency",
-                        value = String.format("%.0f", result.avgLatencyMs),
-                        unit = "ms",
-                        color = Orange700
-                    )
-                }
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Dns, null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(22.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("CDN Test Results", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "${result.testFileSizeMB}MB target · ${result.results.size} CDNs tested",
+                            color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp
+                        )
 
-                Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(20.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    AggregatedStat(
-                        label = "Data Downloaded",
-                        value = formatBytes(result.totalBytesDownloaded),
-                        unit = "",
-                        color = Purple700
-                    )
-                    AggregatedStat(
-                        label = "Total Time",
-                        value = formatDuration(result.totalDurationMs),
-                        unit = "",
-                        color = Gray600
-                    )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            val dlStr = if (result.totalDownloadMbps > 0) String.format("%.1f", result.totalDownloadMbps) else "N/A"
+                            val ulStr = if (result.totalUploadMbps > 0) String.format("%.1f", result.totalUploadMbps) else "N/A"
+                            val latStr = if (result.avgLatencyMs > 0) String.format("%.0f", result.avgLatencyMs) else "N/A"
+                            GalacticStat(label = "Download", value = dlStr, unit = "Mbps")
+                            GalacticStat(label = "Upload", value = ulStr, unit = "Mbps")
+                            GalacticStat(label = "Latency", value = latStr, unit = "ms")
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            val dataLabel = if (result.totalBytesDownloaded >= 1_000_000) {
+                                "${String.format("%.1f", result.totalBytesDownloaded / 1_000_000.0)} MB"
+                            } else if (result.totalBytesDownloaded >= 1_000) {
+                                "${result.totalBytesDownloaded / 1_000} KB"
+                            } else if (result.totalBytesDownloaded > 0) {
+                                "${result.totalBytesDownloaded} B"
+                            } else "N/A"
+                            GalacticStat(label = "Data", value = dataLabel, unit = "")
+                            GalacticStat(label = "Duration", value = formatDuration(result.totalDurationMs), unit = "")
+                        }
+                    }
                 }
             }
         }
 
-        Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = "Per-CDN Performance",
-            fontWeight = FontWeight.SemiBold,
-            color = Gray600,
-            fontSize = 14.sp
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(result.results) { cdnResult ->
-                CdnResultRow(result = cdnResult)
+        // === PER-CDN BREAKDOWN ===
+        item(key = "breakdown_header") {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.BarChart, null, tint = Gray600, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Per-CDN Performance", fontWeight = FontWeight.Bold, color = Gray600, fontSize = 15.sp)
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        items(result.results, key = { it.cdnName }) { cdnResult ->
+            CdnResultRow(result = cdnResult)
+        }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedButton(
-                onClick = onRestart,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(44.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Indigo700)
-            ) {
-                Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Test Again")
-            }
-
-            Button(
-                onClick = onBack,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(44.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Indigo700)
-            ) {
-                Icon(Icons.Default.Home, null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Done")
+        // === ACTION BUTTONS ===
+        item(key = "actions") {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    onClick = onRestart,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Indigo700)
+                ) {
+                    Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Test Again", fontWeight = FontWeight.SemiBold)
+                }
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Indigo700)
+                ) {
+                    Icon(Icons.Default.Home, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Done", fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ErrorContent(
-    message: String,
-    onRetry: () -> Unit
-) {
+private fun GalacticStat(label: String, value: String, unit: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, fontSize = 11.sp, color = Color.White.copy(alpha = 0.6f), fontWeight = FontWeight.Medium)
+        Spacer(Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(value, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            if (unit.isNotEmpty()) {
+                Spacer(Modifier.width(2.dp))
+                Text(unit, fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.padding(bottom = 4.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ErrorContent(message: String, onRetry: () -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            Icons.Default.Warning,
-            null,
-            tint = Red500,
-            modifier = Modifier.size(64.dp)
-        )
-
+        Icon(Icons.Default.Warning, null, tint = Red500, modifier = Modifier.size(64.dp))
         Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = "Test Failed",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.DarkGray
-        )
-
+        Text("Test Failed", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
         Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Gray500,
-            textAlign = TextAlign.Center
-        )
-
+        Text(message, style = MaterialTheme.typography.bodyMedium, color = Gray500, textAlign = TextAlign.Center)
         Spacer(Modifier.height(24.dp))
-
-        Button(
-            onClick = onRetry,
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Indigo700)
-        ) {
+        Button(onClick = onRetry, shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = Indigo700)) {
             Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
             Text("Try Again")
@@ -582,11 +416,23 @@ private fun CdnResultRow(result: CdnTestResult) {
         CDNCategory.UNKNOWN -> Gray500
     }
 
+    val hasDownload = result.downloadSpeedMbps > 0
+    val hasLatency = result.latencyMs > 0
+    val hasData = result.bytesDownloaded > 0
+
     val speedColor = when {
         result.downloadSpeedMbps >= 50 -> Green700
         result.downloadSpeedMbps >= 20 -> Blue700
         result.downloadSpeedMbps >= 5 -> Orange700
         result.downloadSpeedMbps > 0 -> Red500
+        else -> Gray400
+    }
+
+    val latencyColor = when {
+        result.latencyMs in 1.0..30.0 -> Green700
+        result.latencyMs in 30.0..80.0 -> Orange700
+        result.latencyMs in 80.0..200.0 -> Red500
+        result.latencyMs > 0 -> Color(0xFF9C27B0)
         else -> Gray400
     }
 
@@ -597,49 +443,27 @@ private fun CdnResultRow(result: CdnTestResult) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                        .background(catColor)
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(catColor))
                 Spacer(Modifier.width(8.dp))
-                Text(
-                    text = result.cdnName,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp,
-                    color = Color.DarkGray,
-                    modifier = Modifier.weight(1f)
-                )
-                if (result.category != CDNCategory.UNKNOWN) {
-                    Surface(
-                        color = catColor.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = result.category.label,
-                            fontSize = 10.sp,
-                            color = catColor,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
+                Text(result.cdnName, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = Color.DarkGray, modifier = Modifier.weight(1f))
+                Surface(color = catColor.copy(alpha = 0.12f), shape = RoundedCornerShape(8.dp)) {
+                    Text(result.category.label, fontSize = 10.sp, color = catColor, fontWeight = FontWeight.Medium, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                 }
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                CdnStatItem(label = "DL", value = "${String.format("%.1f", result.downloadSpeedMbps)} Mbps", color = speedColor)
-                CdnStatItem(label = "Latency", value = "${String.format("%.1f", result.latencyMs)} ms", color = if (result.latencyMs in 1.0..50.0) Green700 else if (result.latencyMs in 50.0..150.0) Orange700 else Gray500)
-                CdnStatItem(label = "Data", value = formatBytes(result.bytesDownloaded), color = Purple700)
-                CdnStatItem(label = "Time", value = formatDuration(result.durationMs), color = Gray600)
+            Row(Modifier.fillMaxWidth()) {
+                val downloadStr = if (hasDownload) formatSpeed(result.downloadSpeedMbps) else "N/A"
+                val latencyStr = if (hasLatency) "${String.format("%.0f", result.latencyMs)} ms" else "N/A"
+                val dataStr = if (hasData) formatBytes(result.bytesDownloaded) else "N/A"
+                val timeStr = formatDuration(result.durationMs)
+
+                CdnStatItem(label = "Download", value = downloadStr, color = speedColor, modifier = Modifier.weight(1f))
+                CdnStatItem(label = "Latency", value = latencyStr, color = latencyColor, modifier = Modifier.weight(1f))
+                CdnStatItem(label = "Data", value = dataStr, color = Purple700, modifier = Modifier.weight(1f))
+                CdnStatItem(label = "Time", value = timeStr, color = Gray600, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -649,59 +473,29 @@ private fun CdnResultRow(result: CdnTestResult) {
 private fun CdnStatItem(
     label: String,
     value: String,
-    color: Color
+    color: Color,
+    modifier: Modifier = Modifier
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            color = Gray500,
-            fontWeight = FontWeight.Medium
-        )
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(label, fontSize = 11.sp, color = Gray500, fontWeight = FontWeight.Medium)
         Spacer(Modifier.height(2.dp))
-        Text(
-            text = value,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
+        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
-@Composable
-private fun AggregatedStat(
-    label: String,
-    value: String,
-    unit: String,
-    color: Color
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            color = Gray500,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(Modifier.height(4.dp))
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = value,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            if (unit.isNotEmpty()) {
-                Spacer(Modifier.width(2.dp))
-                Text(
-                    text = unit,
-                    fontSize = 12.sp,
-                    color = Gray500,
-                    modifier = Modifier.padding(bottom = 3.dp)
-                )
-            }
-        }
-    }
+private fun formatSpeed(speed: Double): String = when {
+    speed >= 1000 -> String.format("%.0f", speed)
+    speed >= 100 -> String.format("%.1f", speed)
+    speed >= 10 -> String.format("%.1f", speed)
+    speed >= 1 -> String.format("%.2f", speed)
+    speed > 0 -> String.format("%.2f", speed)
+    else -> "0.00"
 }
+
+private fun formatSpeedWithUnit(speed: Double): String = "${formatSpeed(speed)} Mbps"
 
 private fun formatBytes(bytes: Long): String = when {
     bytes >= 1_000_000_000 -> String.format("%.1f GB", bytes / 1_000_000_000.0)
@@ -715,5 +509,3 @@ private fun formatDuration(ms: Long): String = when {
     ms >= 1_000 -> String.format("%.1f s", ms / 1_000.0)
     else -> "${ms}ms"
 }
-
-

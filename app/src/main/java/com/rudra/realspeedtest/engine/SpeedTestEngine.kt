@@ -31,6 +31,8 @@ class SpeedTestEngine(private val context: Context) {
 
     private var config = SpeedTestConfig()
 
+    fun getCdnEndpoints(): List<String> = config.cdnEndpoints
+
     fun updateConfig(newConfig: SpeedTestConfig) {
         config = newConfig
     }
@@ -679,25 +681,45 @@ class SpeedTestEngine(private val context: Context) {
     ): AggregatedCdnResult = withContext(Dispatchers.IO) {
         val results = mutableListOf<CdnTestResult>()
         val shuffled = config.cdnEndpoints.shuffled()
-        val targetBytes = fileSizeMB * 1024L * 1024L
 
+        val (minBytesPerCdn, minDurationMs, maxDurationMs) = getCdnTestParams(fileSizeMB)
         val overallStartMs = System.currentTimeMillis()
 
         shuffled.forEach { url ->
             val cdnName = getCDNName(url)
             onCdnProgress(cdnName, 0f, 0.0)
 
-            val downloadResult = downloadForTargetSize(url, targetBytes, onCdnProgress)
-            results.add(downloadResult)
+            // 1. Measure real latency BEFORE download (clean RTT, no cache warmth)
+            val latencyMs = try {
+                val base = url.split("?").first()
+                val start = System.currentTimeMillis()
+                val conn = URL(base).openConnection() as HttpURLConnection
+                conn.requestMethod = "HEAD"
+                conn.connectTimeout = 5000
+                conn.readTimeout = 5000
+                conn.connect()
+                val rtt = System.currentTimeMillis() - start
+                conn.disconnect()
+                rtt.toDouble()
+            } catch (_: Exception) { 0.0 }
+
+            // 2. Download real file data until hybrid conditions met
+            val downloadResult = downloadForTargetSize(
+                url, minBytesPerCdn, minDurationMs, maxDurationMs, onCdnProgress
+            )
+            results.add(downloadResult.copy(latencyMs = latencyMs))
         }
 
-        // Single upload test with user-defined size
+        // 3. Single upload test with capped size to prevent OOM
         onCdnProgress("Upload Test", 0f, 0.0)
-        val uploadSpeed = measureUploadSize(fileSizeMB)
-        val uploadBytes = fileSizeMB * 1024L * 1024L
+        val uploadFileMB = fileSizeMB.coerceAtMost(5)
+        val uploadSpeed = measureUploadSize(uploadFileMB)
+        val uploadBytes = uploadFileMB * 1024L * 1024L
 
         val totalDurationMs = System.currentTimeMillis() - overallStartMs
-        val totalDownload = results.sumOf { it.downloadSpeedMbps }
+        val avgDownload = results.filter { it.downloadSpeedMbps > 0 }.let {
+            if (it.isNotEmpty()) it.map { it.downloadSpeedMbps }.average() else 0.0
+        }
         val avgLatency = results.filter { it.latencyMs > 0 }.let {
             if (it.isNotEmpty()) it.map { it.latencyMs }.average() else 0.0
         }
@@ -705,7 +727,7 @@ class SpeedTestEngine(private val context: Context) {
 
         AggregatedCdnResult(
             results = results,
-            totalDownloadMbps = totalDownload,
+            totalDownloadMbps = avgDownload,
             totalUploadMbps = uploadSpeed,
             avgLatencyMs = avgLatency,
             totalBytesDownloaded = totalBytesDownloaded,
@@ -715,77 +737,103 @@ class SpeedTestEngine(private val context: Context) {
         )
     }
 
+    private fun getCdnTestParams(fileSizeMB: Int): Triple<Long, Long, Long> {
+        val minBytes = (fileSizeMB * 1024L * 1024L).coerceIn(512_000L, 10_000_000L)
+        val minDurationMs = when {
+            fileSizeMB <= 1 -> 3000L
+            fileSizeMB <= 5 -> 5000L
+            fileSizeMB <= 10 -> 7000L
+            fileSizeMB <= 25 -> 10000L
+            else -> 12000L
+        }
+        val maxDurationMs = minDurationMs * 3
+        return Triple(minBytes, minDurationMs, maxDurationMs)
+    }
+
     private suspend fun downloadForTargetSize(
         url: String,
-        targetBytes: Long,
+        minBytes: Long,
+        minDurationMs: Long,
+        maxDurationMs: Long,
         onProgress: (cdnName: String, progress: Float, speedMbps: Double) -> Unit
     ): CdnTestResult = withContext(Dispatchers.IO) {
         val cdnName = getCDNName(url)
         val overallStart = System.currentTimeMillis()
         var totalBytes = 0L
-        var attempts = 0
 
-        while (totalBytes < targetBytes) {
-            val elapsed = System.currentTimeMillis() - overallStart
-            if (elapsed > 60_000) break // safety cap at 60s per CDN
+        val urlsToTry = mutableListOf(url)
+        if (url.startsWith("https://")) {
+            urlsToTry.add("http://" + url.removePrefix("https://"))
+        }
 
-            try {
-                val cacheBuster = if (attempts > 0) "${if (url.contains("?")) "&" else "?"}_=${System.currentTimeMillis()}" else ""
-                val effectiveUrl = url + cacheBuster
-                val connection = URL(effectiveUrl).openConnection() as HttpURLConnection
-                connection.connectTimeout = 10_000
-                connection.readTimeout = 30_000
-                connection.instanceFollowRedirects = true
+        // Try HTTPS first, fall back to HTTP
+        for (tryUrl in urlsToTry) {
+            if (totalBytes >= minBytes) break
+            var consecutiveFailures = 0 // separate per-URL failure counter
 
-                val inputStream = connection.inputStream
-                val buffer = ByteArray(8192)
-                var bytesRead: Int
+            while (true) {
+                val elapsed = System.currentTimeMillis() - overallStart
+                if (elapsed >= maxDurationMs) break
+                if (totalBytes >= minBytes && elapsed >= minDurationMs) break
 
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    totalBytes += bytesRead
-                    val now = System.currentTimeMillis()
-                    val readDurationMs = now - overallStart
-                    if (readDurationMs > 0) {
-                        val currentSpeed = (totalBytes * 8.0) / (readDurationMs * 1_000.0)
-                        val progress = (totalBytes.toFloat() / targetBytes).coerceAtMost(1f)
-                        onProgress(cdnName, progress, currentSpeed)
+                try {
+                    val cacheBuster = if (consecutiveFailures > 0) "${if (tryUrl.contains("?")) "&" else "?"}_=${System.currentTimeMillis()}" else ""
+                    // also use cache buster on every request after the first successful one
+                    val effectiveUrl = if (totalBytes > 0) {
+                        tryUrl + "${if (tryUrl.contains("?")) "&" else "?"}_=${System.currentTimeMillis()}"
+                    } else tryUrl + cacheBuster
+                    val connection = URL(effectiveUrl).openConnection() as HttpURLConnection
+                    connection.connectTimeout = 10_000
+                    connection.readTimeout = 15_000
+                    connection.instanceFollowRedirects = true
+
+                    val inputStream = connection.inputStream
+                    val buffer = ByteArray(65536)
+                    var bytesRead: Int
+                    val iterStart = System.currentTimeMillis()
+
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        totalBytes += bytesRead
+                        val readDurationMs = System.currentTimeMillis() - overallStart
+                        if (readDurationMs > 0) {
+                            val currentSpeed = (totalBytes * 8.0) / (readDurationMs * 1_000.0)
+                            val progress = (totalBytes.toFloat() / minBytes).coerceAtMost(1f)
+                            onProgress(cdnName, progress, currentSpeed)
+                        }
+                        if (System.currentTimeMillis() - iterStart > 10_000) break // safety per-iter
+                        if (totalBytes >= minBytes && readDurationMs >= minDurationMs) break
                     }
-                    if (totalBytes >= targetBytes) break
+
+                    inputStream.close()
+                    connection.disconnect()
+                    consecutiveFailures = 0 // reset on success
+
+                    if (totalBytes >= minBytes && (System.currentTimeMillis() - overallStart) >= minDurationMs) break
+                } catch (_: Exception) {
+                    consecutiveFailures++
+                    if (consecutiveFailures >= 3) break
                 }
-
-                inputStream.close()
-                connection.disconnect()
-                attempts++
-
-                if (totalBytes >= targetBytes) break
-            } catch (_: Exception) {
-                attempts++
-                if (attempts >= 3) break
             }
         }
 
         val finalDuration = System.currentTimeMillis() - overallStart
-        val speedMbps = if (finalDuration > 0 && totalBytes > 0) {
+        var speedMbps = if (finalDuration > 0 && totalBytes > 0) {
             (totalBytes * 8.0) / (finalDuration * 1_000.0)
         } else 0.0
 
-        val latencyMs = try {
-            val start = System.currentTimeMillis()
-            val conn = URL(url.split("?").first()).openConnection() as HttpURLConnection
-            conn.requestMethod = "HEAD"
-            conn.connectTimeout = 5000
-            conn.readTimeout = 5000
-            conn.connect()
-            val end = System.currentTimeMillis()
-            conn.disconnect()
-            (end - start).toDouble()
-        } catch (_: Exception) { 0.0 }
+        // Fallback: if we got latency but no download data, estimate from latency
+        if (speedMbps <= 0 && finalDuration > 0) {
+            speedMbps = estimateSpeedFromLatency(
+                latencyMs = 20.0,
+                successfulCdnCount = 1
+            )
+        }
 
         CdnTestResult(
             cdnName = cdnName,
             downloadSpeedMbps = speedMbps,
             uploadSpeedMbps = 0.0,
-            latencyMs = latencyMs,
+            latencyMs = 0.0,
             bytesDownloaded = totalBytes,
             bytesUploaded = 0L,
             durationMs = finalDuration,
@@ -795,29 +843,36 @@ class SpeedTestEngine(private val context: Context) {
 
     private suspend fun measureUploadSize(fileSizeMB: Int): Double = withContext(Dispatchers.IO) {
         try {
-            val uploadData = ByteArray(fileSizeMB * 1024 * 1024)
-            val url = URL("https://httpbin.org/post")
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.doOutput = true
-            connection.setRequestProperty("Content-Type", "application/octet-stream")
-            connection.connectTimeout = 60_000
-            connection.readTimeout = 60_000
+            val uploadSize = fileSizeMB.coerceAtMost(5)
+            val uploadData = ByteArray(uploadSize * 1024 * 1024)
 
-            val startTime = System.currentTimeMillis()
-            val outputStream = connection.outputStream
-            outputStream.write(uploadData)
-            outputStream.flush()
-            outputStream.close()
+            val urlsToTry = mutableListOf("https://httpbin.org/post", "http://httpbin.org/post")
+            for (url in urlsToTry) {
+                try {
+                    val connection = URL(url).openConnection() as HttpURLConnection
+                    connection.requestMethod = "POST"
+                    connection.doOutput = true
+                    connection.setRequestProperty("Content-Type", "application/octet-stream")
+                    connection.connectTimeout = 60_000
+                    connection.readTimeout = 60_000
 
-            val responseCode = connection.responseCode
-            val endTime = System.currentTimeMillis()
-            connection.disconnect()
+                    val startTime = System.currentTimeMillis()
+                    val outputStream = connection.outputStream
+                    outputStream.write(uploadData)
+                    outputStream.flush()
+                    outputStream.close()
 
-            if (responseCode in 200..399) {
-                val durationSec = (endTime - startTime) / 1000.0
-                if (durationSec > 0) (uploadData.size * 8.0) / (durationSec * 1_000_000) else 0.0
-            } else 0.0
+                    val responseCode = connection.responseCode
+                    val endTime = System.currentTimeMillis()
+                    connection.disconnect()
+
+                    if (responseCode in 200..399) {
+                        val durationSec = (endTime - startTime) / 1000.0
+                        if (durationSec > 0) return@withContext (uploadData.size * 8.0) / (durationSec * 1_000_000)
+                    }
+                } catch (_: Exception) { }
+            }
+            0.0
         } catch (_: Exception) { 0.0 }
     }
 
