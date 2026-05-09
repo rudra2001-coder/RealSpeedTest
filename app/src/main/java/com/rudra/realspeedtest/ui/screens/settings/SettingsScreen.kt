@@ -48,8 +48,8 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Gray800,
-                    titleContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -63,12 +63,12 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Appearance Section
-            SectionHeader("Appearance", Icons.Default.Palette, Purple700)
+            SectionHeader("Appearance", Icons.Default.Palette, MaterialTheme.colorScheme.tertiary)
 
             SettingsCard {
                 SwitchSetting(
                     icon = Icons.Default.DarkMode,
-                    iconColor = Indigo700,
+                    iconColor = MaterialTheme.colorScheme.tertiary,
                     title = "Dark Mode",
                     subtitle = "Switch between light and dark theme",
                     checked = isDarkMode,
@@ -80,12 +80,12 @@ fun SettingsScreen(
             }
 
             // Test Settings Section
-            SectionHeader("Test Settings", Icons.Default.Speed, Green700)
+            SectionHeader("Test Settings", Icons.Default.Speed, MaterialTheme.colorScheme.primary)
 
             SettingsCard {
                 SwitchSetting(
                     icon = Icons.Default.Autorenew,
-                    iconColor = Green700,
+                    iconColor = MaterialTheme.colorScheme.primary,
                     title = "Auto Test",
                     subtitle = "Automatically run tests at intervals",
                     checked = autoTestEnabled,
@@ -97,19 +97,19 @@ fun SettingsScreen(
                 )
 
                 if (autoTestEnabled) {
-                    HorizontalDivider(color = Gray100, modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 8.dp))
                     Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Interval", style = MaterialTheme.typography.bodyMedium, color = Gray600)
+                            Text("Interval", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
                                 "${intervalMinutes.toInt()} minutes",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Green700
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                         Slider(
@@ -118,9 +118,9 @@ fun SettingsScreen(
                             valueRange = 5f..120f,
                             steps = 22,
                             colors = SliderDefaults.colors(
-                                thumbColor = Green700,
-                                activeTrackColor = Green700,
-                                inactiveTrackColor = Gray200
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant
                             )
                         )
                     }
@@ -161,7 +161,7 @@ fun SettingsScreen(
                                 Text(
                                     "Notify when speed drops below",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Gray500
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -175,7 +175,7 @@ fun SettingsScreen(
                         Text("${speedThreshold.toInt()} Mbps", fontWeight = FontWeight.Bold, color = Orange700)
                         if (speedThreshold > 0) {
                             TextButton(onClick = { speedThreshold = 0f; viewModel.setSpeedThreshold(0.0) }) {
-                                Text("Disable", color = Gray500)
+                                Text("Disable", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -187,25 +187,25 @@ fun SettingsScreen(
                         colors = SliderDefaults.colors(
                             thumbColor = Orange700,
                             activeTrackColor = Orange700,
-                            inactiveTrackColor = Gray200
+                            inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant
                         )
                     )
                 }
             }
 
             // About Section
-            SectionHeader("About", Icons.Default.Info, Blue700)
+            SectionHeader("About", Icons.Default.Info, MaterialTheme.colorScheme.secondary)
 
             SettingsCard {
                 Column {
                     AboutRow("App Name", "Real Speed Test")
-                    HorizontalDivider(color = Gray100, modifier = Modifier.padding(vertical = 6.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 6.dp))
                     AboutRow("Version", "1.0.0")
-                    HorizontalDivider(color = Gray100, modifier = Modifier.padding(vertical = 6.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 6.dp))
                     AboutRow("Developer", "Rudra")
-                    HorizontalDivider(color = Gray100, modifier = Modifier.padding(vertical = 6.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 6.dp))
                     AboutRow("Network Tests", "10 CDN endpoints across global locations")
-                    HorizontalDivider(color = Gray100, modifier = Modifier.padding(vertical = 6.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 6.dp))
                     AboutRow("Data Storage", "Local only — your data stays on device")
                 }
             }
@@ -219,7 +219,7 @@ fun SettingsScreen(
                     onBack()
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Green700),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Icon(Icons.Default.Save, null)
@@ -249,7 +249,7 @@ private fun SectionHeader(title: String, icon: ImageVector, color: Color) {
             title,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
-            color = Color.DarkGray
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -258,7 +258,7 @@ private fun SectionHeader(title: String, icon: ImageVector, color: Color) {
 private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -295,7 +295,7 @@ private fun SwitchSetting(
             Spacer(Modifier.width(14.dp))
             Column {
                 Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Gray500)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         Switch(
@@ -316,7 +316,7 @@ private fun AboutRow(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = Gray600)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
     }
 }

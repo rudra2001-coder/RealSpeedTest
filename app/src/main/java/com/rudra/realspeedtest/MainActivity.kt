@@ -30,11 +30,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            var isDarkMode by remember { mutableStateOf(false) }
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val viewModel: SpeedTestViewModel = viewModel(factory = SpeedTestViewModel.Factory(context))
+            val isDarkMode by viewModel.isDarkMode.collectAsState()
 
             RealSpeedTestTheme(darkTheme = isDarkMode) {
                 MainScreen(
-                    onToggleDarkMode = { isDarkMode = !isDarkMode }
+                    viewModel = viewModel,
+                    isDarkMode = isDarkMode
                 )
             }
         }
@@ -43,9 +46,11 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(onToggleDarkMode: () -> Unit) {
+fun MainScreen(
+    viewModel: SpeedTestViewModel,
+    isDarkMode: Boolean
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val viewModel: SpeedTestViewModel = viewModel(factory = SpeedTestViewModel.Factory(context))
     var selectedTab by remember { mutableIntStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
     var showCdnTest by remember { mutableStateOf(false) }
@@ -74,11 +79,11 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
     )
 
     val navBarColor = when (selectedTab) {
-        0 -> Green700
-        1 -> Blue700
-        2 -> Purple700
-        3 -> Indigo700
-        else -> Green700
+        0 -> MaterialTheme.colorScheme.primary
+        1 -> MaterialTheme.colorScheme.secondary
+        2 -> MaterialTheme.colorScheme.tertiary
+        3 -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.primary
     }
 
     // Show CdnTestScreen overlay
@@ -103,7 +108,7 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
     Scaffold(
         bottomBar = {
             NavigationBar(
-                containerColor = CardLight,
+                containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp
             ) {
                 tabs.forEachIndexed { index, item ->
@@ -126,8 +131,8 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
                             selectedIconColor = navBarColor,
                             selectedTextColor = navBarColor,
                             indicatorColor = navBarColor.copy(alpha = 0.1f),
-                            unselectedIconColor = Gray500,
-                            unselectedTextColor = Gray500
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                 }

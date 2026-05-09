@@ -70,15 +70,15 @@ fun SpeedTestScreen(
                 },
                 actions = {
                     IconButton(onClick = { viewModel.toggleDarkMode() }) {
-                        Icon(Icons.Default.DarkMode, "Dark Mode", tint = Color.White)
+                        Icon(Icons.Default.DarkMode, "Dark Mode", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, "Settings", tint = Color.White)
+                        Icon(Icons.Default.Settings, "Settings", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Green700,
-                    titleContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -185,12 +185,12 @@ fun SpeedTestScreen(
                     item {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
-                                color = Purple700.copy(alpha = 0.12f),
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Icon(
                                     Icons.Default.Dns, null,
-                                    tint = Purple700,
+                                    tint = MaterialTheme.colorScheme.tertiary,
                                     modifier = Modifier.padding(6.dp).size(18.dp)
                                 )
                             }
@@ -240,7 +240,8 @@ fun SpeedTestScreen(
                             message = "Your ISP may be limiting speed on ${result.throttledCDN}. " +
                                     "Multiple CDN tests show inconsistent speeds.",
                             icon = Icons.Default.Warning,
-                            color = Orange500
+                            containerColor = Orange500.copy(alpha = 0.1f),
+                            contentColor = Orange500
                         )
                     }
                 }
@@ -250,7 +251,8 @@ fun SpeedTestScreen(
                             title = "Inconsistent Performance",
                             message = "Unstable connection on: ${result.inconsistentEndpoints.joinToString()}",
                             icon = Icons.Default.SignalWifiBad,
-                            color = FairColor
+                            containerColor = FairColor.copy(alpha = 0.1f),
+                            contentColor = FairColor
                         )
                     }
                 }
@@ -284,14 +286,14 @@ private fun StartTestButton(onClick: () -> Unit, hasPreviousResult: Boolean) {
     ModernCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Green700)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
         Button(
             onClick = onClick,
             modifier = Modifier.fillMaxWidth().height(60.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
-                contentColor = Color.White
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ),
             shape = RoundedCornerShape(20.dp)
         ) {
@@ -330,7 +332,7 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Box {
@@ -341,9 +343,9 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                Green700.copy(alpha = pulseAlpha),
+                                MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha),
                                 Color.Transparent,
-                                Blue700.copy(alpha = pulseAlpha * 0.5f)
+                                MaterialTheme.colorScheme.secondary.copy(alpha = pulseAlpha * 0.5f)
                             )
                         ),
                         RoundedCornerShape(20.dp)
@@ -357,12 +359,12 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
                 Box(
                     modifier = Modifier
                         .size(72.dp)
-                        .background(Green700.copy(alpha = 0.08f), CircleShape),
+                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(48.dp),
-                        color = Green700,
+                        color = MaterialTheme.colorScheme.primary,
                         strokeWidth = 4.dp,
                         progress = { progress.progress }
                     )
@@ -382,14 +384,14 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
                         text = String.format("%.1f", animatedSpeed),
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Green700
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
                         "Mbps",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Gray500,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 6.dp)
                     )
                 }
@@ -398,8 +400,8 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
                 LinearProgressIndicator(
                     progress = { progress.progress },
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                    color = Green700,
-                    trackColor = Gray100
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 Spacer(Modifier.height(6.dp))
                 Row(
@@ -409,18 +411,18 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
                     Text(
                         "${(progress.progress * 100).toInt()}%",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Gray500,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                     if (progress.currentCDN.isNotEmpty()) {
                         Surface(
-                            color = Green700.copy(alpha = 0.08f),
+                            color = MaterialTheme.colorScheme.primaryContainer,
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(
                                 text = progress.currentCDN,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Green700,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                             )
@@ -451,7 +453,7 @@ private fun LiveCDNProgressCard(cdnResults: List<CDNEndpoint>) {
                     fontWeight = FontWeight.Bold
                 )
                 Surface(
-                    color = Green700.copy(alpha = 0.1f),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
@@ -459,7 +461,7 @@ private fun LiveCDNProgressCard(cdnResults: List<CDNEndpoint>) {
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = Green700
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -467,7 +469,7 @@ private fun LiveCDNProgressCard(cdnResults: List<CDNEndpoint>) {
             cdnResults.take(5).forEach { cdn ->
                 LiveCDNItem(cdn)
                 if (cdn != cdnResults.take(5).last()) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = Gray200)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
         }
@@ -487,9 +489,9 @@ private fun LiveCDNItem(cdn: CDNEndpoint) {
     )
 
     val progressColor = when {
-        isDone -> Green700
-        isRunning -> Blue700
-        else -> Gray400
+        isDone -> MaterialTheme.colorScheme.primary
+        isRunning -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
@@ -503,7 +505,7 @@ private fun LiveCDNItem(cdn: CDNEndpoint) {
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(if (isRunning) Blue700 else if (isDone) Green700 else Gray300)
+                        .background(if (isRunning) MaterialTheme.colorScheme.secondary else if (isDone) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
@@ -529,7 +531,7 @@ private fun LiveCDNItem(cdn: CDNEndpoint) {
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(3.dp))
-                .background(Gray100)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Box(
                 modifier = Modifier
@@ -538,11 +540,11 @@ private fun LiveCDNItem(cdn: CDNEndpoint) {
                     .background(
                         brush = Brush.horizontalGradient(
                             colors = if (isDone)
-                                listOf(Green700, Green500)
+                                listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                             else if (isRunning)
-                                listOf(Blue700, Blue500.copy(alpha = 0.7f))
+                                listOf(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f))
                             else
-                                listOf(Gray300, Gray300)
+                                listOf(MaterialTheme.colorScheme.outline, MaterialTheme.colorScheme.outline)
                         ),
                         shape = RoundedCornerShape(3.dp)
                     )
@@ -560,16 +562,16 @@ private fun FairnessScoreCard(
     speedVariation: Double = 0.0
 ) {
     val (icon, color) = when {
-        isThrottled -> Icons.Default.GppBad to Red500
-        score >= 80 -> Icons.Default.Verified to Green700
+        isThrottled -> Icons.Default.GppBad to MaterialTheme.colorScheme.error
+        score >= 80 -> Icons.Default.Verified to MaterialTheme.colorScheme.primary
         score >= 60 -> Icons.Default.CheckCircle to Orange700
-        else -> Icons.Default.Warning to Red500
+        else -> Icons.Default.Warning to MaterialTheme.colorScheme.error
     }
 
     val variationColor = when {
-        speedVariation < 10 -> Green700
+        speedVariation < 10 -> MaterialTheme.colorScheme.primary
         speedVariation < 20 -> Orange700
-        else -> Red500
+        else -> MaterialTheme.colorScheme.error
     }
 
     ModernCard(
@@ -605,7 +607,7 @@ private fun FairnessScoreCard(
                     Text(
                         text = if (isThrottled) "Traffic Shaping Detected" else "Fair & Neutral",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray600
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
@@ -624,7 +626,7 @@ private fun FairnessScoreCard(
             }
             if (speedVariation > 0) {
                 Spacer(Modifier.height(12.dp))
-                HorizontalDivider(color = Gray200)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Spacer(Modifier.height(12.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -634,7 +636,7 @@ private fun FairnessScoreCard(
                     Text(
                         text = "Speed Stability",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Gray600
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -689,7 +691,7 @@ private fun CDNPerformanceCard(
                 Text(
                     category,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Gray500,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
@@ -702,20 +704,20 @@ private fun CDNPerformanceCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Download, null, tint = Blue700, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Download, null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(16.dp))
                 Text(
                     "${String.format("%.1f", downloadSpeed)}",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
-                    color = Blue700
+                    color = MaterialTheme.colorScheme.secondary
                 )
-                Text("Mbps", style = MaterialTheme.typography.labelSmall, color = Gray500)
+                Text("Mbps", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             LinearProgressIndicator(
                 progress = { dlProgress },
                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                color = Blue700,
-                trackColor = Gray200
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.outlineVariant
             )
             Spacer(Modifier.height(8.dp))
 
@@ -732,24 +734,24 @@ private fun CDNPerformanceCard(
                     fontWeight = FontWeight.Bold,
                     color = Teal700
                 )
-                Text("Mbps", style = MaterialTheme.typography.labelSmall, color = Gray500)
+                Text("Mbps", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             LinearProgressIndicator(
                 progress = { ulProgress },
                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                 color = Teal700,
-                trackColor = Gray200
+                trackColor = MaterialTheme.colorScheme.outlineVariant
             )
             Spacer(Modifier.height(8.dp))
 
             // Latency
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.SignalCellularAlt, null, tint = Purple700, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.SignalCellularAlt, null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(4.dp))
                 Text(
                     "${latency.toInt()} ms",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Purple700
+                    color = MaterialTheme.colorScheme.tertiary
                 )
             }
         }
@@ -768,7 +770,7 @@ private fun SpeedStatsRow(result: SpeedTestResult) {
             value = String.format("%.1f", result.downloadSpeedMbps),
             unit = "Mbps",
             icon = Icons.Default.Download,
-            color = Blue700,
+            color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.weight(1f)
         )
         StatCard(
@@ -795,7 +797,7 @@ private fun NetworkQualityRow(result: SpeedTestResult) {
             unit = "ms",
             subtitle = "Ping response",
             icon = Icons.Default.SignalCellularAlt,
-            color = Purple700,
+            color = MaterialTheme.colorScheme.tertiary,
             modifier = Modifier.weight(1f)
         )
         DetailedStatCard(
@@ -813,7 +815,7 @@ private fun NetworkQualityRow(result: SpeedTestResult) {
             unit = "%",
             subtitle = "Reliability",
             icon = Icons.Default.Warning,
-            color = Red700,
+            color = MaterialTheme.colorScheme.error,
             modifier = Modifier.weight(1f)
         )
     }
@@ -834,7 +836,7 @@ private fun ShareActionsRow(context: Context, viewModel: SpeedTestViewModel) {
                 clipboard.setPrimaryClip(ClipData.newPlainText("Speed Test", viewModel.exportAsText()))
             },
             modifier = Modifier.weight(1f),
-            containerColor = Blue700
+            containerColor = MaterialTheme.colorScheme.secondary
         )
         ActionButton(
             text = "Share",
@@ -862,7 +864,7 @@ private fun ShareActionsRow(context: Context, viewModel: SpeedTestViewModel) {
                 context.startActivity(Intent.createChooser(intent, "Share as Image"))
             },
             modifier = Modifier.weight(1f),
-            containerColor = Purple700
+            containerColor = MaterialTheme.colorScheme.tertiary
         )
     }
 }
@@ -942,7 +944,7 @@ private fun TestModeSelector(
     ModernCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Gray100)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(
@@ -953,7 +955,7 @@ private fun TestModeSelector(
                     "Test Depth",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
-                    color = Gray500,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
             }
@@ -965,9 +967,9 @@ private fun TestModeSelector(
                 TestMode.entries.forEach { mode ->
                     val isSelected = mode == selectedMode
                     val color = when (mode) {
-                        TestMode.QUICK -> Green700
-                        TestMode.NORMAL -> Blue700
-                        TestMode.THOROUGH -> Purple700
+                        TestMode.QUICK -> MaterialTheme.colorScheme.primary
+                        TestMode.NORMAL -> MaterialTheme.colorScheme.secondary
+                        TestMode.THOROUGH -> MaterialTheme.colorScheme.tertiary
                     }
                     val scale by animateFloatAsState(
                         targetValue = if (isSelected) 1f else 0.92f,
@@ -991,7 +993,7 @@ private fun TestModeSelector(
                                 Text(
                                     mode.accuracyLabel,
                                     fontSize = 8.sp,
-                                    color = if (isSelected) color else Gray400
+                                    color = if (isSelected) color else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         },
@@ -999,10 +1001,10 @@ private fun TestModeSelector(
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = color.copy(alpha = 0.12f),
                             selectedLabelColor = color,
-                            containerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            borderColor = if (isSelected) color.copy(alpha = 0.5f) else Gray300,
+                            borderColor = if (isSelected) color.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline,
                             selectedBorderColor = color,
                             enabled = true,
                             selected = isSelected
@@ -1027,7 +1029,7 @@ private fun RealWorldScoreCard(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Dashboard, null, tint = Purple700, modifier = Modifier.size(24.dp))
+                Icon(Icons.Default.Dashboard, null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(10.dp))
                 Text(
                     "Real-World Experience",
@@ -1042,9 +1044,9 @@ private fun RealWorldScoreCard(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = when (stabilityGrade) {
-                        StabilityGrade.ROCK_SOLID, StabilityGrade.STABLE -> Green700
+                        StabilityGrade.ROCK_SOLID, StabilityGrade.STABLE -> MaterialTheme.colorScheme.primary
                         StabilityGrade.MODERATE -> Orange700
-                        else -> Red500
+                        else -> MaterialTheme.colorScheme.error
                     }
                 )
             }
@@ -1091,14 +1093,14 @@ private fun ExperienceStat(
     }
     Surface(
         modifier = modifier,
-        color = Gray100,
+        color = MaterialTheme.colorScheme.surfaceVariant,
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(label, fontSize = 11.sp, color = Gray600, fontWeight = FontWeight.Medium)
+            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(6.dp))
             Text(
                 "$score",

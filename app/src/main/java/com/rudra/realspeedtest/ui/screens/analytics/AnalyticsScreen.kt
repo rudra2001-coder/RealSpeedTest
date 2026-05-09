@@ -57,8 +57,8 @@ fun AnalyticsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Purple700,
-                    titleContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    titleContentColor = MaterialTheme.colorScheme.onTertiary
                 )
             )
         }
@@ -86,12 +86,12 @@ fun AnalyticsScreen(
                     item {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
-                                color = Purple700.copy(alpha = 0.12f),
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Icon(
                                     Icons.Default.Dns, null,
-                                    tint = Purple700,
+                                    tint = MaterialTheme.colorScheme.tertiary,
                                     modifier = Modifier.padding(6.dp).size(18.dp)
                                 )
                             }
@@ -113,12 +113,12 @@ fun AnalyticsScreen(
                     item {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
-                                color = Blue700.copy(alpha = 0.12f),
+                                color = MaterialTheme.colorScheme.secondaryContainer,
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Icon(
                                     Icons.Default.ShowChart, null,
-                                    tint = Blue700,
+                                    tint = MaterialTheme.colorScheme.secondary,
                                     modifier = Modifier.padding(6.dp).size(18.dp)
                                 )
                             }
@@ -154,18 +154,18 @@ private fun EmptyAnalyticsState(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(32.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(Purple100, RoundedCornerShape(24.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Analytics,
-                    contentDescription = null,
-                    modifier = Modifier.size(56.dp),
-                    tint = Purple500
-                )
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(24.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Analytics,
+                        contentDescription = null,
+                        modifier = Modifier.size(56.dp),
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
@@ -177,7 +177,7 @@ private fun EmptyAnalyticsState(modifier: Modifier = Modifier) {
             Text(
                 text = "Run at least 2 speed tests to see\ndetailed analytics and trends.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Gray500,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
@@ -215,11 +215,11 @@ private fun CDNPerformanceOverview(cdnResults: List<CDNEndpoint>) {
                     Text(
                         text = "${cdnResults.size} CDN endpoints tested",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Surface(
-                    color = Green700.copy(alpha = 0.1f),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
@@ -227,7 +227,7 @@ private fun CDNPerformanceOverview(cdnResults: List<CDNEndpoint>) {
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = Green700
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -242,7 +242,7 @@ private fun CDNPerformanceOverview(cdnResults: List<CDNEndpoint>) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            HorizontalDivider(color = Gray200)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
@@ -262,7 +262,7 @@ private fun CDNPerformanceOverview(cdnResults: List<CDNEndpoint>) {
                 OverviewStatItem(
                     label = "Avg Latency",
                     value = String.format("%.0f", avgLatency),
-                    color = Purple700
+                    color = MaterialTheme.colorScheme.tertiary
                 )
             }
         }
@@ -279,7 +279,7 @@ private fun OverviewStatItem(
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = Gray500
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -291,7 +291,7 @@ private fun OverviewStatItem(
         Text(
             text = if (label.contains("Latency")) "ms" else "Mbps",
             style = MaterialTheme.typography.bodySmall,
-            color = Gray500
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -359,7 +359,7 @@ private fun CDNPerformanceCard(cdn: CDNEndpoint) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(12.dp)
-                        .background(Gray200, RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(6.dp))
                 ) {
                     Box(
                         modifier = Modifier
@@ -417,18 +417,21 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
                     Text(
                         text = "Last ${history.size} tests",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Icon(
                     imageVector = Icons.Default.ShowChart,
                     contentDescription = null,
-                    tint = Blue700,
+                    tint = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.size(28.dp)
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            val chartPrimary = MaterialTheme.colorScheme.secondary
+            val chartSurface = MaterialTheme.colorScheme.surface
 
             Canvas(
                 modifier = Modifier
@@ -443,8 +446,8 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
 
                 val gradient = Brush.verticalGradient(
                     colors = listOf(
-                        Blue700.copy(alpha = 0.3f),
-                        Blue700.copy(alpha = 0f)
+                        chartPrimary.copy(alpha = 0.3f),
+                        chartPrimary.copy(alpha = 0f)
                     )
                 )
 
@@ -474,7 +477,7 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
 
                 drawPath(
                     path = linePath,
-                    color = Blue700,
+                    color = chartPrimary,
                     style = Stroke(width = 4f, cap = StrokeCap.Round)
                 )
 
@@ -482,12 +485,12 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
                     val x = index * stepX
                     val y = size.height - ((result.downloadSpeedMbps - minSpeed) / range * size.height).toFloat()
                     drawCircle(
-                        color = Blue700,
+                        color = chartPrimary,
                         radius = 8f,
                         center = Offset(x, y)
                     )
                     drawCircle(
-                        color = Color.White,
+                        color = chartSurface,
                         radius = 4f,
                         center = Offset(x, y)
                     )
@@ -499,16 +502,21 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "Oldest",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray500
-                )
-                Text(
-                    text = "Latest",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray500
-                )
+                    Text(
+                        text = "Oldest",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Latest",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Last ${history.size} tests",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
             }
         }
     }
@@ -545,7 +553,7 @@ private fun StatisticsCard(history: List<SpeedTestResult>) {
                     label = "Avg Download",
                     value = String.format("%.1f", avgDownload),
                     unit = "Mbps",
-                    color = Blue700,
+                    color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.weight(1f)
                 )
                 StatBox(
@@ -567,7 +575,7 @@ private fun StatisticsCard(history: List<SpeedTestResult>) {
                     label = "Avg Latency",
                     value = String.format("%.0f", avgLatency),
                     unit = "ms",
-                    color = Purple700,
+                    color = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.weight(1f)
                 )
                 StatBox(
@@ -611,14 +619,14 @@ private fun StatisticsCard(history: List<SpeedTestResult>) {
                     label = "Avg Packet Loss",
                     value = String.format("%.2f", avgPacketLoss),
                     unit = "%",
-                    color = Red700,
+                    color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.weight(1f)
                 )
                 StatBox(
                     label = "Total Tests",
                     value = "${history.size}",
                     unit = "tests",
-                    color = Gray600,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -637,7 +645,7 @@ private fun StatBox(
     ModernCard(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Gray100)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -646,7 +654,7 @@ private fun StatBox(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray500
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
@@ -661,7 +669,7 @@ private fun StatBox(
             Text(
                 text = unit,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray500
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

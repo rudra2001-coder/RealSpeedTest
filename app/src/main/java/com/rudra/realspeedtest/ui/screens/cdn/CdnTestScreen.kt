@@ -51,9 +51,9 @@ fun CdnTestScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Indigo700,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -62,7 +62,7 @@ fun CdnTestScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(LightBackground)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             when (val p = phase) {
                 is CdnTestPhase.Idle -> IdleContent(
@@ -109,7 +109,7 @@ private fun IdleContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
         ) {
             Column(
@@ -120,18 +120,18 @@ private fun IdleContent(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Indigo700.copy(alpha = 0.12f)),
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Dns, null, tint = Indigo700, modifier = Modifier.size(32.dp))
+                    Icon(Icons.Default.Dns, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                 }
 
                 Spacer(Modifier.height(16.dp))
-                Text("CDN Performance Test", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+                Text("CDN Performance Test", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = "Test all CDN endpoints one by one with a custom file size.\nGet per-CDN and aggregated download/upload/latency results.",
-                    style = MaterialTheme.typography.bodyMedium, color = Gray500, textAlign = TextAlign.Center, lineHeight = 20.sp
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, lineHeight = 20.sp
                 )
             }
         }
@@ -141,24 +141,24 @@ private fun IdleContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text("Test File Size Per CDN", fontWeight = FontWeight.SemiBold, color = Gray600, fontSize = 14.sp)
+                Text("Test File Size Per CDN", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 Spacer(Modifier.height(4.dp))
-                Text("$fileSizeMB MB", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Indigo700, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                Text("$fileSizeMB MB", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
                 Slider(
                     value = fileSizeMB.toFloat(),
                     onValueChange = { onFileSizeChange((it + 0.5f).toInt()) },
                     valueRange = 1f..50f, steps = 48,
-                    colors = SliderDefaults.colors(thumbColor = Indigo700, activeTrackColor = Indigo700, inactiveTrackColor = Gray200)
+                    colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant)
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("1 MB", fontSize = 12.sp, color = Gray500)
-                    Text("25 MB", fontSize = 12.sp, color = Gray500)
-                    Text("50 MB", fontSize = 12.sp, color = Gray500)
+                    Text("1 MB", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("25 MB", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("50 MB", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Spacer(Modifier.height(12.dp))
                 Text(
@@ -167,7 +167,7 @@ private fun IdleContent(
                         fileSizeMB <= 10 -> "Balanced test — ~7s per CDN"
                         else -> "Thorough test — ~12s per CDN"
                     },
-                    fontSize = 12.sp, color = Gray400, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
+                    fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -178,7 +178,7 @@ private fun IdleContent(
             onClick = onStart,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Indigo700)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(22.dp))
             Spacer(Modifier.width(8.dp))
@@ -208,39 +208,39 @@ private fun TestingContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Indigo700.copy(alpha = 0.08f)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
-                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(Indigo700.copy(alpha = pulseAlpha)),
+                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp))                        .background(MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha)),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Color.White, strokeWidth = 3.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(28.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 3.dp)
                     }
                     Spacer(Modifier.width(16.dp))
                     Column {
-                        Text("Testing CDN $currentIndex/$totalCount", fontSize = 14.sp, color = Gray500, fontWeight = FontWeight.Medium)
-                        Text(currentCdn, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Indigo700)
+                        Text("Testing CDN $currentIndex/$totalCount", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
+                        Text(currentCdn, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 Spacer(Modifier.height(16.dp))
                 LinearProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                    color = Indigo700, trackColor = Gray200
+                    color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.outlineVariant
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("${(progress * 100).toInt()}%", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Gray600)
+                Text("${(progress * 100).toInt()}%", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (currentSpeed > 0) {
-                    Text("${String.format("%.1f", currentSpeed)} Mbps", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Green700)
+                    Text("${String.format("%.1f", currentSpeed)} Mbps", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
 
         Spacer(Modifier.height(16.dp))
-        Text("Completed (${resultsSoFar.size})", fontWeight = FontWeight.SemiBold, color = Gray600, fontSize = 14.sp)
+        Text("Completed (${resultsSoFar.size})", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
         Spacer(Modifier.height(8.dp))
 
         LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -252,7 +252,7 @@ private fun TestingContent(
             onClick = onCancel,
             modifier = Modifier.fillMaxWidth().height(44.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Red500)
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
         ) {
             Icon(Icons.Default.Close, null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
@@ -283,7 +283,7 @@ private fun CompletedContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            Brush.verticalGradient(listOf(Indigo700, Indigo700.copy(alpha = 0.85f), Indigo700.copy(alpha = 0.7f))),
+                            Brush.verticalGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.85f), MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))),
                             RoundedCornerShape(24.dp)
                         )
                 ) {
@@ -331,9 +331,9 @@ private fun CompletedContent(
         // === PER-CDN BREAKDOWN ===
         item(key = "breakdown_header") {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.BarChart, null, tint = Gray600, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.BarChart, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Per-CDN Performance", fontWeight = FontWeight.Bold, color = Gray600, fontSize = 15.sp)
+                Text("Per-CDN Performance", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp)
             }
         }
 
@@ -348,7 +348,7 @@ private fun CompletedContent(
                     onClick = onRestart,
                     modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Indigo700)
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
@@ -358,7 +358,7 @@ private fun CompletedContent(
                     onClick = onBack,
                     modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Indigo700)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Icon(Icons.Default.Home, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
@@ -391,13 +391,13 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Default.Warning, null, tint = Red500, modifier = Modifier.size(64.dp))
+        Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(64.dp))
         Spacer(Modifier.height(16.dp))
-        Text("Test Failed", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+        Text("Test Failed", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(Modifier.height(8.dp))
-        Text(message, style = MaterialTheme.typography.bodyMedium, color = Gray500, textAlign = TextAlign.Center)
+        Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onRetry, shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = Indigo700)) {
+        Button(onClick = onRetry, shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) {
             Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
             Text("Try Again")
@@ -408,12 +408,12 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
 @Composable
 private fun CdnResultRow(result: CdnTestResult) {
     val catColor = when (result.category) {
-        CDNCategory.UI_FRAMEWORK -> Green700
-        CDNCategory.WEB_CORE -> Blue700
+        CDNCategory.UI_FRAMEWORK -> MaterialTheme.colorScheme.primary
+        CDNCategory.WEB_CORE -> MaterialTheme.colorScheme.secondary
         CDNCategory.UTILITIES -> Orange700
-        CDNCategory.DATA_LAYER -> Purple700
+        CDNCategory.DATA_LAYER -> MaterialTheme.colorScheme.tertiary
         CDNCategory.GAME_ENGINE -> Pink700
-        CDNCategory.UNKNOWN -> Gray500
+        CDNCategory.UNKNOWN -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     val hasDownload = result.downloadSpeedMbps > 0
@@ -421,32 +421,32 @@ private fun CdnResultRow(result: CdnTestResult) {
     val hasData = result.bytesDownloaded > 0
 
     val speedColor = when {
-        result.downloadSpeedMbps >= 50 -> Green700
-        result.downloadSpeedMbps >= 20 -> Blue700
+        result.downloadSpeedMbps >= 50 -> MaterialTheme.colorScheme.primary
+        result.downloadSpeedMbps >= 20 -> MaterialTheme.colorScheme.secondary
         result.downloadSpeedMbps >= 5 -> Orange700
-        result.downloadSpeedMbps > 0 -> Red500
-        else -> Gray400
+        result.downloadSpeedMbps > 0 -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     val latencyColor = when {
-        result.latencyMs in 1.0..30.0 -> Green700
+        result.latencyMs in 1.0..30.0 -> MaterialTheme.colorScheme.primary
         result.latencyMs in 30.0..80.0 -> Orange700
-        result.latencyMs in 80.0..200.0 -> Red500
-        result.latencyMs > 0 -> Color(0xFF9C27B0)
-        else -> Gray400
+        result.latencyMs in 80.0..200.0 -> MaterialTheme.colorScheme.error
+        result.latencyMs > 0 -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(catColor))
                 Spacer(Modifier.width(8.dp))
-                Text(result.cdnName, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = Color.DarkGray, modifier = Modifier.weight(1f))
+                Text(result.cdnName, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                 Surface(color = catColor.copy(alpha = 0.12f), shape = RoundedCornerShape(8.dp)) {
                     Text(result.category.label, fontSize = 10.sp, color = catColor, fontWeight = FontWeight.Medium, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                 }
@@ -463,7 +463,7 @@ private fun CdnResultRow(result: CdnTestResult) {
                 CdnStatItem(label = "Download", value = downloadStr, color = speedColor, modifier = Modifier.weight(1f))
                 CdnStatItem(label = "Latency", value = latencyStr, color = latencyColor, modifier = Modifier.weight(1f))
                 CdnStatItem(label = "Data", value = dataStr, color = Purple700, modifier = Modifier.weight(1f))
-                CdnStatItem(label = "Time", value = timeStr, color = Gray600, modifier = Modifier.weight(1f))
+                CdnStatItem(label = "Time", value = timeStr, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -480,7 +480,7 @@ private fun CdnStatItem(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(label, fontSize = 11.sp, color = Gray500, fontWeight = FontWeight.Medium)
+        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
         Spacer(Modifier.height(2.dp))
         Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = color)
     }

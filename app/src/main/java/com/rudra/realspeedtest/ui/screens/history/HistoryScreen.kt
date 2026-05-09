@@ -60,14 +60,14 @@ fun HistoryScreen(
                             Icon(
                                 Icons.Default.DeleteSweep,
                                 contentDescription = "Clear History",
-                                tint = Color.White
+                                tint = MaterialTheme.colorScheme.onSecondary
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Blue700,
-                    titleContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondary
                 )
             )
         }
@@ -122,14 +122,14 @@ fun HistoryScreen(
                         viewModel.clearHistory()
                         showClearDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Red500)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Clear All", color = Color.White)
+                    Text("Clear All", color = MaterialTheme.colorScheme.onError)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
-                    Text("Cancel", color = Gray600)
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
             shape = RoundedCornerShape(20.dp)
@@ -147,18 +147,18 @@ private fun EmptyHistoryState(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(32.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(Gray100, RoundedCornerShape(24.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.History,
-                    contentDescription = null,
-                    modifier = Modifier.size(56.dp),
-                    tint = Gray400
-                )
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(24.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.History,
+                        contentDescription = null,
+                        modifier = Modifier.size(56.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
@@ -170,7 +170,7 @@ private fun EmptyHistoryState(modifier: Modifier = Modifier) {
             Text(
                 text = "Run a speed test to see your history here.\nTrack your network performance over time.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Gray500,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
@@ -206,11 +206,11 @@ private fun HistorySummaryCard(history: List<SpeedTestResult>) {
                     Text(
                         text = "$totalTests tests recorded",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Surface(
-                    color = Green700.copy(alpha = 0.1f),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
@@ -228,14 +228,14 @@ private fun HistorySummaryCard(history: List<SpeedTestResult>) {
                             text = "${excellentCount + goodCount} Good",
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = Green700
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Gray200)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
@@ -246,7 +246,7 @@ private fun HistorySummaryCard(history: List<SpeedTestResult>) {
                     label = "Avg Download",
                     value = String.format("%.1f", avgDownload),
                     unit = "Mbps",
-                    color = Blue700
+                    color = MaterialTheme.colorScheme.secondary
                 )
                 SummaryItem(
                     label = "Avg Upload",
@@ -258,7 +258,7 @@ private fun HistorySummaryCard(history: List<SpeedTestResult>) {
                     label = "Avg Latency",
                     value = String.format("%.0f", avgLatency),
                     unit = "ms",
-                    color = Purple700
+                    color = MaterialTheme.colorScheme.tertiary
                 )
             }
         }
@@ -273,24 +273,24 @@ private fun SummaryItem(
     color: Color
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = Gray500
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                text = value,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            Text(
-                text = " $unit",
+                text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray500
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = value,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+                Text(
+                    text = " $unit",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
         }
     }
 }
@@ -332,7 +332,7 @@ private fun HistoryCard(
                     Text(
                         text = result.networkInfo?.ispName ?: "Unknown ISP",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -352,7 +352,7 @@ private fun HistoryCard(
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                         contentDescription = null,
-                        tint = Gray500
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -366,7 +366,7 @@ private fun HistoryCard(
                 CompactStatItem(
                     icon = Icons.Default.Download,
                     value = String.format("%.1f", result.downloadSpeedMbps),
-                    color = Blue700
+                    color = MaterialTheme.colorScheme.secondary
                 )
                 CompactStatItem(
                     icon = Icons.Default.Upload,
@@ -376,7 +376,7 @@ private fun HistoryCard(
                 CompactStatItem(
                     icon = Icons.Default.NetworkPing,
                     value = String.format("%.0f", result.latencyMs),
-                    color = Purple700
+                    color = MaterialTheme.colorScheme.tertiary
                 )
                 CompactStatItem(
                     icon = Icons.Default.Speed,
@@ -388,7 +388,7 @@ private fun HistoryCard(
 
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = Gray200)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
@@ -405,7 +405,7 @@ private fun HistoryCard(
                         icon = Icons.Default.Warning,
                         value = String.format("%.1f", result.packetLossPercent),
                         label = "Loss",
-                        color = Red700
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
 
@@ -415,7 +415,8 @@ private fun HistoryCard(
                         title = "Throttling Detected",
                         message = "ISP may be throttling speed on ${result.throttledCDN}",
                         icon = Icons.Default.Warning,
-                        color = Orange500
+                        containerColor = Orange500.copy(alpha = 0.1f),
+                        contentColor = Orange500
                     )
                 }
 
@@ -429,7 +430,7 @@ private fun HistoryCard(
                             Text(
                                 text = "Public IP",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Gray500
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = network.publicIP,
@@ -441,7 +442,7 @@ private fun HistoryCard(
                             Text(
                                 text = "Connection",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Gray500
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = network.connectionType.name,
@@ -460,7 +461,7 @@ private fun HistoryCard(
                                 Text(
                                     text = "Location",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Gray500
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = buildString {
@@ -476,7 +477,7 @@ private fun HistoryCard(
                                 Text(
                                     text = "ISP",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Gray500
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = network.ispName,
@@ -517,7 +518,7 @@ private fun CompactStatItem(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray500
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

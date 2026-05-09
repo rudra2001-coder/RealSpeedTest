@@ -43,7 +43,7 @@ import kotlin.math.roundToInt
 fun ModernCard(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(16.dp),
-    colors: CardColors = CardDefaults.cardColors(containerColor = Color.White),
+    colors: CardColors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     elevation: Dp = 3.dp,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
@@ -103,11 +103,15 @@ fun SpeedGauge(
         else -> BadColor
     }
 
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val outlineVariant = MaterialTheme.colorScheme.outlineVariant
+    val bgSurface = MaterialTheme.colorScheme.surface
+
     val gradientColors = listOf(
-        LightBackground,
-        Color.White,
+        surfaceVariant,
+        bgSurface,
         gaugeColor.copy(alpha = 0.05f),
-        Color.White
+        bgSurface
     )
 
     val animatedGradient by infiniteTransition.animateFloat(
@@ -136,7 +140,7 @@ fun SpeedGauge(
                 RoundedCornerShape(28.dp)
             )
             .shadow(12.dp, RoundedCornerShape(28.dp))
-            .background(Color.White, RoundedCornerShape(28.dp)),
+            .background(bgSurface, RoundedCornerShape(28.dp)),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize().padding(14.dp)) {
@@ -157,7 +161,7 @@ fun SpeedGauge(
 
             // Track background
             drawArc(
-                color = Gray100,
+                color = surfaceVariant,
                 startAngle = 135f,
                 sweepAngle = 270f,
                 useCenter = false,
@@ -199,7 +203,7 @@ fun SpeedGauge(
                 val tickOuter = radius + strokeWidth / 2 - 4.dp.toPx()
                 val isReached = sweepAngle >= (270f / tickCount) * i
                 drawLine(
-                    color = if (isReached && sweepAngle > 0) gaugeColor.copy(alpha = 0.5f) else Gray200,
+                    color = if (isReached && sweepAngle > 0) gaugeColor.copy(alpha = 0.5f) else outlineVariant,
                     start = Offset(
                         center.x + tickInner * cos(tickAngleRad).toFloat(),
                         center.y + tickInner * sin(tickAngleRad).toFloat()
@@ -219,12 +223,12 @@ fun SpeedGauge(
                 text = String.format("%.1f", animatedSpeed),
                 fontSize = 44.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.DarkGray
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "Mbps",
                 fontSize = 14.sp,
-                color = Gray500,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = 2.sp
             )
@@ -237,7 +241,7 @@ fun SpeedGauge(
                 Text(
                     text = getSpeedLabel(animatedSpeed.toDouble()),
                     fontSize = 12.sp,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                 )
@@ -255,6 +259,7 @@ fun MiniSpeedGauge(
 ) {
     val sweepAngle = ((speed.toFloat() / maxSpeed.toFloat()) * 270f).coerceIn(0f, 270f)
     val gaugeColor = getSpeedColor(speed)
+    val miniSurfaceVariant = MaterialTheme.colorScheme.surfaceVariant
 
     Box(
         modifier = modifier.size(size),
@@ -267,7 +272,7 @@ fun MiniSpeedGauge(
 
             // Background track with shadow effect
             drawArc(
-                color = Gray100,
+                color = miniSurfaceVariant,
                 startAngle = 135f,
                 sweepAngle = 270f,
                 useCenter = false,
@@ -354,7 +359,7 @@ fun ISPScoreCard(
             Text(
                 text = "Internet Quality",
                 style = MaterialTheme.typography.titleMedium,
-                color = Gray600,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -384,7 +389,7 @@ fun ISPScoreCard(
             Text(
                 text = "ISP Score out of 100",
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray500
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -424,7 +429,7 @@ fun StatCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray500,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -440,7 +445,7 @@ fun StatCard(
                     Text(
                         text = unit,
                         fontSize = 14.sp,
-                        color = Gray500,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
@@ -488,7 +493,7 @@ fun DetailedStatCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray500,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -502,7 +507,7 @@ fun DetailedStatCard(
                     Text(
                         text = unit,
                         fontSize = 14.sp,
-                        color = Gray500,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
@@ -510,7 +515,7 @@ fun DetailedStatCard(
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -519,7 +524,7 @@ fun DetailedStatCard(
                     Text(
                         text = trend,
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (trend.startsWith("+")) GoodColor else if (trend.startsWith("-")) BadColor else Gray500,
+                        color = if (trend.startsWith("+")) GoodColor else if (trend.startsWith("-")) BadColor else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -582,7 +587,7 @@ fun CDNResultItem(
         modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (status == "DONE") ExcellentColor.copy(alpha = 0.08f) else Gray100
+            containerColor = if (status == "DONE") ExcellentColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
@@ -627,7 +632,7 @@ fun CDNResultItem(
                 Text(
                     text = " Mbps",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray500
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else if (status == "TESTING") {
                 CircularProgressIndicator(
@@ -686,13 +691,13 @@ fun CDNResultCard(
                         Text(
                             text = "Speed",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Gray500
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = String.format("%.1f Mbps", speed),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (status == "DONE") getSpeedColor(speed) else Gray500
+                            color = if (status == "DONE") getSpeedColor(speed) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Spacer(modifier = Modifier.width(24.dp))
@@ -700,7 +705,7 @@ fun CDNResultCard(
                         Text(
                             text = "Latency",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Gray500
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = String.format("%.0f ms", latency),
@@ -733,13 +738,14 @@ fun AnimatedProgressRing(
         ),
         label = "alpha"
     )
+    val ringColor = MaterialTheme.colorScheme.primary
 
     Canvas(modifier = modifier.size(size)) {
         val strokeWidth = 8.dp.toPx()
         val radius = (size.toPx() - strokeWidth) / 2
 
         drawArc(
-            color = Color.White.copy(alpha = alpha),
+            color = ringColor.copy(alpha = alpha),
             startAngle = 0f,
             sweepAngle = 360f * progress,
             useCenter = false,
@@ -753,13 +759,14 @@ fun AlertBanner(
     title: String,
     message: String,
     icon: ImageVector,
-    color: Color,
+    containerColor: Color,
+    contentColor: Color,
     modifier: Modifier = Modifier
 ) {
     ModernCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f))
+        colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -768,13 +775,13 @@ fun AlertBanner(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .background(color.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                    .background(contentColor.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = color,
+                    tint = contentColor,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -784,13 +791,13 @@ fun AlertBanner(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = color
+                    color = contentColor
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray700
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -868,7 +875,7 @@ private fun InfoItemModern(
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = Gray500,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
         Spacer(modifier = Modifier.height(2.dp))
@@ -922,7 +929,7 @@ fun HistoryLineChart(
                 Text(
                     text = "No history data available",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Gray500
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -950,7 +957,7 @@ fun HistoryLineChart(
                 Text(
                     text = "${data.size} tests",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray500
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Spacer(Modifier.height(16.dp))
@@ -1008,12 +1015,12 @@ fun HistoryLineChart(
                 Text(
                     text = "0 $unit",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Gray500
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "${String.format("%.0f", maxValue)} $unit",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Gray500
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -1044,13 +1051,13 @@ fun SpeedComparisonCard(
                 Text(
                     text = "vs. Your Average",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = "Last 30 tests",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray500
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1201,7 +1208,7 @@ fun ISPScoreBreakdown(
                 color = Red700
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Gray200)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1242,7 +1249,7 @@ private fun ScoreBreakdownItem(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray600
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = "$score/$maxScore",
@@ -1256,7 +1263,7 @@ private fun ScoreBreakdownItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)
-                .background(Gray200, RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(3.dp))
         ) {
             Box(
                 modifier = Modifier
