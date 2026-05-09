@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Real Speed Test</string>
+    <string name="widget_description">Quick access to run speed tests</string>
+</resources>
