@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.rudra.realspeedtest.data.model.*
 import com.rudra.realspeedtest.ui.components.*
 import com.rudra.realspeedtest.ui.theme.*
+import androidx.compose.runtime.collectAsState
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -870,7 +871,7 @@ private fun ShareActionsRow(context: Context, viewModel: SpeedTestViewModel) {
         )
     }
 
-    viewModel.currentResult.value?.let { result ->
+    viewModel.currentResult.collectAsState().value?.let { result ->
         if (showPreview) {
             PreviewResultDialog(
                 result = result,
