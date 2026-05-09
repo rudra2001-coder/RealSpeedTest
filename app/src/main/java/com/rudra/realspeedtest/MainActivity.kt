@@ -18,6 +18,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rudra.realspeedtest.ui.screens.analytics.AnalyticsScreen
 import com.rudra.realspeedtest.ui.screens.history.HistoryScreen
 import com.rudra.realspeedtest.ui.screens.speedtest.SpeedTestScreen
+import com.rudra.realspeedtest.ui.screens.cdn.CdnTestScreen
+import com.rudra.realspeedtest.ui.screens.cdn.CdnTestViewModel
 import com.rudra.realspeedtest.ui.screens.features.FeatureHubScreen
 import com.rudra.realspeedtest.ui.screens.settings.SettingsScreen
 import com.rudra.realspeedtest.ui.theme.*
@@ -46,6 +48,7 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
     val viewModel: SpeedTestViewModel = viewModel(factory = SpeedTestViewModel.Factory(context))
     var selectedTab by remember { mutableIntStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
+    var showCdnTest by remember { mutableStateOf(false) }
 
     val tabs = listOf(
         NavigationItem(
@@ -76,6 +79,16 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
         2 -> Purple700
         3 -> Indigo700
         else -> Green700
+    }
+
+    // Show CdnTestScreen overlay
+    if (showCdnTest) {
+        val cdnViewModel: CdnTestViewModel = viewModel(factory = CdnTestViewModel.Factory(context))
+        CdnTestScreen(
+            viewModel = cdnViewModel,
+            onBack = { showCdnTest = false }
+        )
+        return
     }
 
     // Show SettingsScreen as a full overlay when showSettings is true
@@ -136,7 +149,8 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
                 3 -> FeatureHubScreen(
                     viewModel = viewModel,
                     onNavigateToTab = { tab -> selectedTab = tab },
-                    onOpenSettings = { showSettings = true }
+                    onOpenSettings = { showSettings = true },
+                    onOpenCdnTest = { showCdnTest = true }
                 )
             }
         }

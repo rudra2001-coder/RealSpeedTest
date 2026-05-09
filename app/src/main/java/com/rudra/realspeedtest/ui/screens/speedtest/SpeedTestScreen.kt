@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -169,6 +170,16 @@ fun SpeedTestScreen(
                     NetworkQualityRow(result)
                 }
 
+                // Real-World Score
+                result.realWorldScore?.let { rw ->
+                    item {
+                        RealWorldScoreCard(
+                            realWorldScore = rw,
+                            stabilityGrade = result.stabilityGrade
+                        )
+                    }
+                }
+
                 // CDN Performance Breakdown
                 if (result.cdnResults.isNotEmpty()) {
                     item {
@@ -201,8 +212,9 @@ fun SpeedTestScreen(
                                 CDNPerformanceCard(
                                     name = cdn.name,
                                     downloadSpeed = cdn.downloadSpeedMbps,
-                                    uploadSpeed = cdn.uploadSpeedMbps, // needs model support
-                                    latency = cdn.latencyMs
+                                    uploadSpeed = cdn.uploadSpeedMbps,
+                                    latency = cdn.latencyMs,
+                                    category = cdn.category.label
                                 )
                             }
                         }
@@ -654,7 +666,8 @@ private fun CDNPerformanceCard(
     name: String,
     downloadSpeed: Double,
     uploadSpeed: Double = 0.0,
-    latency: Double
+    latency: Double,
+    category: String = ""
 ) {
     val maxSpeed = 100.0 // visual reference
     val dlProgress = (downloadSpeed / maxSpeed).toFloat().coerceIn(0f, 1f)
@@ -672,6 +685,15 @@ private fun CDNPerformanceCard(
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
+            if (category.isNotEmpty()) {
+                Text(
+                    category,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Gray500,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
             Spacer(Modifier.height(12.dp))
 
             // Download
@@ -910,12 +932,32 @@ private fun TestModeSelector(
     selectedMode: TestMode,
     onModeSelected: (TestMode) -> Unit
 ) {
+    val transition = rememberInfiniteTransition(label = "mode_pulse")
+    val pulse by transition.animateFloat(
+        initialValue = 1f, targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
+        label = "pulse"
+    )
+
     ModernCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Gray100)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Test Depth",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = Gray500,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+            }
+            Spacer(Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -927,30 +969,40 @@ private fun TestModeSelector(
                         TestMode.NORMAL -> Blue700
                         TestMode.THOROUGH -> Purple700
                     }
+                    val scale by animateFloatAsState(
+                        targetValue = if (isSelected) 1f else 0.92f,
+                        animationSpec = tween(250),
+                        label = "chip_scale"
+                    )
+
                     FilterChip(
                         selected = isSelected,
                         onClick = { onModeSelected(mode) },
                         label = {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.graphicsLayer(scaleX = scale, scaleY = scale)
+                            ) {
                                 Text(
                                     mode.label,
                                     fontSize = 12.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
                                 Text(
-                                    mode.description.substringBefore(" —"),
-                                    fontSize = 9.sp,
-                                    color = if (isSelected) color.copy(alpha = 0.7f) else Gray400
+                                    mode.accuracyLabel,
+                                    fontSize = 8.sp,
+                                    color = if (isSelected) color else Gray400
                                 )
                             }
                         },
                         modifier = Modifier.weight(1f),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = color.copy(alpha = 0.12f),
-                            selectedLabelColor = color
+                            selectedLabelColor = color,
+                            containerColor = Color.White
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            borderColor = if (isSelected) color.copy(alpha = 0.4f) else Gray300,
+                            borderColor = if (isSelected) color.copy(alpha = 0.5f) else Gray300,
                             selectedBorderColor = color,
                             enabled = true,
                             selected = isSelected
@@ -959,6 +1011,107 @@ private fun TestModeSelector(
                     )
                 }
             }
+        }
+    }
+}
+
+// ---------- Real-World Score Card ----------
+@Composable
+private fun RealWorldScoreCard(
+    realWorldScore: RealWorldScore,
+    stabilityGrade: StabilityGrade
+) {
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Dashboard, null, tint = Purple700, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    "Real-World Experience",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "${stabilityGrade.emoji} ${stabilityGrade.label}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = when (stabilityGrade) {
+                        StabilityGrade.ROCK_SOLID, StabilityGrade.STABLE -> Green700
+                        StabilityGrade.MODERATE -> Orange700
+                        else -> Red500
+                    }
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ExperienceStat(
+                    label = "🎬 Streaming",
+                    score = realWorldScore.streamingScore,
+                    grade = realWorldScore.streamingLabel,
+                    modifier = Modifier.weight(1f)
+                )
+                ExperienceStat(
+                    label = "🎮 Gaming",
+                    score = realWorldScore.gamingScore,
+                    grade = realWorldScore.gamingLabel,
+                    modifier = Modifier.weight(1f)
+                )
+                ExperienceStat(
+                    label = "🌐 Browsing",
+                    score = realWorldScore.browsingScore,
+                    grade = realWorldScore.browsingLabel,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExperienceStat(
+    label: String,
+    score: Int,
+    grade: String,
+    modifier: Modifier = Modifier
+) {
+    val scoreColor = when {
+        score >= 80 -> ExcellentColor
+        score >= 60 -> GoodColor
+        score >= 40 -> FairColor
+        else -> BadColor
+    }
+    Surface(
+        modifier = modifier,
+        color = Gray100,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(label, fontSize = 11.sp, color = Gray600, fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "$score",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = scoreColor
+            )
+            Text(
+                grade,
+                fontSize = 10.sp,
+                color = scoreColor,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }

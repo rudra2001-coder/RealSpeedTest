@@ -43,6 +43,7 @@ fun FeatureHubScreen(
     viewModel: SpeedTestViewModel,
     onNavigateToTab: (Int) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenCdnTest: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -70,6 +71,7 @@ fun FeatureHubScreen(
         FeatureGrid(
             onNavigateToTab = onNavigateToTab,
             onOpenSettings = onOpenSettings,
+            onOpenCdnTest = onOpenCdnTest,
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -81,6 +83,7 @@ fun FeatureHubScreen(
 private fun FeatureGrid(
     onNavigateToTab: (Int) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenCdnTest: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val features = listOf(
@@ -103,7 +106,7 @@ private fun FeatureGrid(
             "cdn", "CDN Breakdown",
             "Compare speed across multiple CDN endpoints worldwide",
             Icons.Default.Dns, Orange700
-        ) { onNavigateToTab(0) },
+        ) { onOpenCdnTest() },
         FeatureItem(
             "network", "Network Info",
             "View public IP, ISP details and connection type",
