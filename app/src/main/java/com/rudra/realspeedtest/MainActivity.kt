@@ -70,25 +70,6 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = when (selectedTab) {
-                            0 -> "Real Speed Test"
-                            1 -> "Test History"
-                            2 -> "Analytics"
-                            else -> "Real Speed Test"
-                        },
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = navBarColor,
-                    titleContentColor = androidx.compose.ui.graphics.Color.White
-                )
-            )
-        },
         bottomBar = {
             NavigationBar(
                 containerColor = CardLight,

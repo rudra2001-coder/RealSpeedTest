@@ -1,6 +1,12 @@
 package com.rudra.realspeedtest.ui.components
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -29,6 +35,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rudra.realspeedtest.data.model.QualityLabel
 import com.rudra.realspeedtest.ui.theme.*
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.roundToInt
+
+@Composable
+fun ModernCard(
+    modifier: Modifier = Modifier,
+    shape: RoundedCornerShape = RoundedCornerShape(16.dp),
+    colors: CardColors = CardDefaults.cardColors(containerColor = Color.White),
+    elevation: Dp = 3.dp,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val finalModifier = modifier.shadow(elevation + 2.dp, shape, clip = false)
+
+    if (onClick != null) {
+        Card(
+            modifier = finalModifier,
+            colors = colors,
+            shape = shape,
+            elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+            onClick = onClick
+        ) { content() }
+    } else {
+        Card(
+            modifier = finalModifier,
+            colors = colors,
+            shape = shape,
+            elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+        ) { content() }
+    }
+}
 
 @Composable
 fun SpeedGauge(
@@ -44,6 +82,17 @@ fun SpeedGauge(
         label = "speed"
     )
 
+    val infiniteTransition = rememberInfiniteTransition(label = "gauge_pulse")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow"
+    )
+
     val sweepAngle = (animatedSpeed / maxSpeed.toFloat() * 270f).coerceIn(0f, 270f)
 
     val gaugeColor = when {
@@ -54,25 +103,70 @@ fun SpeedGauge(
         else -> BadColor
     }
 
+    val gradientColors = listOf(
+        LightBackground,
+        Color.White,
+        gaugeColor.copy(alpha = 0.05f),
+        Color.White
+    )
+
+    val animatedGradient by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 100f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "gradient"
+    )
+
     Box(
-        modifier = modifier.size(size),
+        modifier = modifier
+            .size(size)
+            .padding(8.dp)
+            .background(
+                Brush.sweepGradient(
+                    colors = listOf(
+                        gaugeColor.copy(alpha = 0.08f),
+                        Color.Transparent,
+                        gaugeColor.copy(alpha = 0.05f),
+                        Color.Transparent
+                    )
+                ),
+                RoundedCornerShape(28.dp)
+            )
+            .shadow(12.dp, RoundedCornerShape(28.dp))
+            .background(Color.White, RoundedCornerShape(28.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 24.dp.toPx()
-            val radius = (size.toPx() - strokeWidth) / 2
-            val center = Offset(size.toPx() / 2, size.toPx() / 2)
+        Canvas(modifier = Modifier.fillMaxSize().padding(14.dp)) {
+            val strokeWidth = 22.dp.toPx()
+            val radius = (size.toPx() - strokeWidth - 40.dp.toPx()) / 2
+            val center = Offset(size.toPx() / 2 - 14.dp.toPx(), size.toPx() / 2 - 14.dp.toPx())
 
+            // Outer glow ring
             drawArc(
-                color = GaugeBackground,
+                color = gaugeColor.copy(alpha = glowAlpha * 0.3f),
                 startAngle = 135f,
-                sweepAngle = 270f,
+                sweepAngle = sweepAngle.coerceAtLeast(2f),
                 useCenter = false,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+                style = Stroke(width = strokeWidth + 12.dp.toPx(), cap = StrokeCap.Round),
                 topLeft = Offset(center.x - radius, center.y - radius),
                 size = Size(radius * 2, radius * 2)
             )
 
+            // Track background
+            drawArc(
+                color = Gray100,
+                startAngle = 135f,
+                sweepAngle = 270f,
+                useCenter = false,
+                style = Stroke(width = strokeWidth + 2.dp.toPx(), cap = StrokeCap.Round),
+                topLeft = Offset(center.x - radius, center.y - radius),
+                size = Size(radius * 2, radius * 2)
+            )
+
+            // Active arc with gradient
             drawArc(
                 color = gaugeColor,
                 startAngle = 135f,
@@ -82,28 +176,72 @@ fun SpeedGauge(
                 topLeft = Offset(center.x - radius, center.y - radius),
                 size = Size(radius * 2, radius * 2)
             )
+
+            // Glow highlight on the arc
+            if (sweepAngle > 2f) {
+                drawArc(
+                    color = Color.White.copy(alpha = 0.4f),
+                    startAngle = 135f,
+                    sweepAngle = (sweepAngle * 0.3f).coerceAtMost(30f),
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth * 0.4f, cap = StrokeCap.Round),
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2)
+                )
+            }
+
+            // Elegant tick marks
+            val tickCount = 9
+            for (i in 0..tickCount) {
+                val tickAngle = 135.0 + (270.0 / tickCount) * i
+                val tickAngleRad = Math.toRadians(tickAngle)
+                val tickInner = radius - strokeWidth / 2 + 4.dp.toPx()
+                val tickOuter = radius + strokeWidth / 2 - 4.dp.toPx()
+                val isReached = sweepAngle >= (270f / tickCount) * i
+                drawLine(
+                    color = if (isReached && sweepAngle > 0) gaugeColor.copy(alpha = 0.5f) else Gray200,
+                    start = Offset(
+                        center.x + tickInner * cos(tickAngleRad).toFloat(),
+                        center.y + tickInner * sin(tickAngleRad).toFloat()
+                    ),
+                    end = Offset(
+                        center.x + tickOuter * cos(tickAngleRad).toFloat(),
+                        center.y + tickOuter * sin(tickAngleRad).toFloat()
+                    ),
+                    strokeWidth = if (isReached) 3.dp.toPx() else 2.dp.toPx(),
+                    cap = StrokeCap.Round
+                )
+            }
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = String.format("%.1f", animatedSpeed),
-                fontSize = 52.sp,
+                fontSize = 44.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color.DarkGray
             )
             Text(
                 text = "Mbps",
-                fontSize = 16.sp,
-                color = Gray500,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = getSpeedLabel(animatedSpeed.toDouble()),
                 fontSize = 14.sp,
-                color = getSpeedColor(animatedSpeed.toDouble()),
-                fontWeight = FontWeight.SemiBold
+                color = Gray500,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 2.sp
             )
+            Spacer(modifier = Modifier.height(6.dp))
+            Surface(
+                color = gaugeColor,
+                shape = RoundedCornerShape(20.dp),
+                shadowElevation = 2.dp
+            ) {
+                Text(
+                    text = getSpeedLabel(animatedSpeed.toDouble()),
+                    fontSize = 12.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
         }
     }
 }
@@ -116,28 +254,31 @@ fun MiniSpeedGauge(
     size: Dp = 80.dp
 ) {
     val sweepAngle = ((speed.toFloat() / maxSpeed.toFloat()) * 270f).coerceIn(0f, 270f)
+    val gaugeColor = getSpeedColor(speed)
 
     Box(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 10.dp.toPx()
+            val strokeWidth = 8.dp.toPx()
             val radius = (size.toPx() - strokeWidth) / 2
             val center = Offset(size.toPx() / 2, size.toPx() / 2)
 
+            // Background track with shadow effect
             drawArc(
-                color = GaugeBackground,
+                color = Gray100,
                 startAngle = 135f,
                 sweepAngle = 270f,
                 useCenter = false,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+                style = Stroke(width = strokeWidth + 2.dp.toPx(), cap = StrokeCap.Round),
                 topLeft = Offset(center.x - radius, center.y - radius),
                 size = Size(radius * 2, radius * 2)
             )
 
+            // Active arc
             drawArc(
-                color = getSpeedColor(speed),
+                color = gaugeColor,
                 startAngle = 135f,
                 sweepAngle = sweepAngle,
                 useCenter = false,
@@ -145,14 +286,27 @@ fun MiniSpeedGauge(
                 topLeft = Offset(center.x - radius, center.y - radius),
                 size = Size(radius * 2, radius * 2)
             )
+
+            // Highlight
+            if (sweepAngle > 2f) {
+                drawArc(
+                    color = Color.White.copy(alpha = 0.5f),
+                    startAngle = 135f,
+                    sweepAngle = (sweepAngle * 0.3f).coerceAtMost(20f),
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth * 0.5f, cap = StrokeCap.Round),
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2)
+                )
+            }
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = String.format("%.0f", speed),
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = gaugeColor
             )
         }
     }
@@ -189,11 +343,8 @@ fun ISPScoreCard(
         QualityLabel.UNKNOWN -> Gray400
     }
 
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(20.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(
@@ -248,10 +399,8 @@ fun StatCard(
     icon: ImageVector,
     color: Color = MaterialTheme.colorScheme.primary
 ) {
-    Card(
-        modifier = modifier
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = modifier,
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(
@@ -311,10 +460,8 @@ fun DetailedStatCard(
     color: Color,
     trend: String? = null
 ) {
-    Card(
-        modifier = modifier
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = modifier,
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
@@ -431,14 +578,12 @@ fun CDNResultItem(
         else -> Gray400
     }
 
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
+    ModernCard(
+        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (status == "DONE") ExcellentColor.copy(alpha = 0.08f) else Gray100
-        ),
-        shape = RoundedCornerShape(12.dp)
+        )
     ) {
         Row(
             modifier = Modifier
@@ -510,11 +655,8 @@ fun CDNResultCard(
         else -> Gray400
     }
 
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
@@ -614,12 +756,10 @@ fun AlertBanner(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
-        shape = RoundedCornerShape(16.dp)
+    ModernCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -664,11 +804,8 @@ fun NetworkInfoCard(
     connectionType: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -751,9 +888,8 @@ fun HistoryLineChart(
     unit: String = "Mbps"
 ) {
     if (data.isEmpty()) {
-        Card(
+        ModernCard(
             modifier = modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = CardLight),
             shape = RoundedCornerShape(16.dp)
         ) {
             Box(
@@ -775,9 +911,8 @@ fun HistoryLineChart(
     val maxValue = data.maxOfOrNull { it.second }?.coerceAtLeast(1.0) ?: 1.0
     val minValue = 0.0
 
-    Card(
+    ModernCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -873,9 +1008,8 @@ fun SpeedComparisonCard(
     val difference = if (averageSpeed > 0) ((currentSpeed - averageSpeed) / averageSpeed * 100) else 0.0
     val isFaster = difference > 0
 
-    Card(
+    ModernCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
@@ -929,9 +1063,8 @@ fun BandwidthDistributionChart(
 
     val colors = listOf(Blue700, Green700, Orange700, Purple700, Teal700, Red700, Pink700, Indigo700)
 
-    Card(
+    ModernCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -1010,9 +1143,8 @@ fun ISPScoreBreakdown(
     val total = downloadScore + latencyScore + jitterScore + packetLossScore
     val maxScore = 40 + 25 + 20 + 15
 
-    Card(
+    ModernCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

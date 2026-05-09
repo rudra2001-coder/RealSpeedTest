@@ -75,8 +75,8 @@ fun AnalyticsScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 if (currentResults.isNotEmpty()) {
                     item {
@@ -84,11 +84,24 @@ fun AnalyticsScreen(
                     }
 
                     item {
-                        Text(
-                            text = "CDN Performance Details",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                color = Purple700.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Dns, null,
+                                    tint = Purple700,
+                                    modifier = Modifier.padding(6.dp).size(18.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = "CDN Performance Details",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
                     items(currentResults) { cdn ->
@@ -98,11 +111,24 @@ fun AnalyticsScreen(
 
                 if (history.size >= 2) {
                     item {
-                        Text(
-                            text = "Speed Over Time",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                color = Blue700.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.ShowChart, null,
+                                    tint = Blue700,
+                                    modifier = Modifier.padding(6.dp).size(18.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = "Speed Over Time",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
                     item {
@@ -170,11 +196,8 @@ private fun CDNPerformanceOverview(cdnResults: List<CDNEndpoint>) {
         .map { it.latencyMs }.average().coerceAtLeast(0.0)
     val successRate = (cdnResults.count { it.status == TestStatus.DONE }.toDouble() / cdnResults.size) * 100
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(20.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -290,11 +313,8 @@ private fun CDNPerformanceCard(cdn: CDNEndpoint) {
         else -> BadColor
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -378,11 +398,8 @@ private fun CDNPerformanceCard(cdn: CDNEndpoint) {
 private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
     if (history.isEmpty()) return
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -507,11 +524,8 @@ private fun StatisticsCard(history: List<SpeedTestResult>) {
     val maxDownload = history.maxOfOrNull { it.downloadSpeedMbps } ?: 0.0
     val minDownload = history.minOfOrNull { it.downloadSpeedMbps } ?: 0.0
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -620,10 +634,10 @@ private fun StatBox(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    ModernCard(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = Gray100),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Gray100)
     ) {
         Column(
             modifier = Modifier.padding(12.dp),

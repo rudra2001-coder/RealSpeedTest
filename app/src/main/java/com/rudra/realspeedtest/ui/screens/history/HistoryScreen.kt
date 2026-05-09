@@ -84,8 +84,8 @@ fun HistoryScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 item {
                     HistorySummaryCard(history = history)
@@ -187,11 +187,8 @@ private fun HistorySummaryCard(history: List<SpeedTestResult>) {
     val excellentCount = history.count { it.qualityLabel == QualityLabel.EXCELLENT }
     val goodCount = history.count { it.qualityLabel == QualityLabel.GOOD }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(20.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -315,12 +312,8 @@ private fun HistoryCard(
         QualityLabel.UNKNOWN -> Gray400
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(16.dp))
-            .animateContentSize(),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
         shape = RoundedCornerShape(16.dp),
         onClick = onClick
     ) {

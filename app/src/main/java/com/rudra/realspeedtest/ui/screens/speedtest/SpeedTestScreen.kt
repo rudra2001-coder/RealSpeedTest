@@ -5,6 +5,13 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -79,8 +87,8 @@ fun SpeedTestScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             // Speed gauge (always visible)
             item {
@@ -154,12 +162,24 @@ fun SpeedTestScreen(
                 // CDN Performance Breakdown
                 if (result.cdnResults.isNotEmpty()) {
                     item {
-                        Text(
-                            text = "CDN Performance Breakdown",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                color = Purple700.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Dns, null,
+                                    tint = Purple700,
+                                    modifier = Modifier.padding(6.dp).size(18.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = "CDN Performance Breakdown",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                     // Horizontal scrollable cards for CDN results (compact view)
                     item {
@@ -240,13 +260,13 @@ fun SpeedTestScreen(
     }
 }
 
-// ---------- Start Button (unchanged) ----------
+// ---------- Start Button ----------
 @Composable
 private fun StartTestButton(onClick: () -> Unit, hasPreviousResult: Boolean) {
-    Card(
-        modifier = Modifier.fillMaxWidth().shadow(8.dp, RoundedCornerShape(20.dp)),
-        colors = CardDefaults.cardColors(containerColor = Green700),
-        shape = RoundedCornerShape(20.dp)
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Green700)
     ) {
         Button(
             onClick = onClick,
@@ -268,53 +288,127 @@ private fun StartTestButton(onClick: () -> Unit, hasPreviousResult: Boolean) {
     }
 }
 
-// ---------- In‑Progress Card ----------
+// ---------- In‑Progress Card with live animation ----------
 @Composable
 private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
-    Card(
-        modifier = Modifier.fillMaxWidth().shadow(8.dp, RoundedCornerShape(20.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
-        shape = RoundedCornerShape(20.dp)
+    val infiniteTransition = rememberInfiniteTransition(label = "test_pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.1f,
+        targetValue = 0.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse_bg"
+    )
+
+    val animatedSpeed by animateFloatAsState(
+        targetValue = currentSpeed.toFloat(),
+        animationSpec = tween(600, easing = FastOutSlowInEasing),
+        label = "live_speed"
+    )
+
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
-                color = Green700,
-                strokeWidth = 4.dp
+        Box {
+            // Animated background pulse
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Green700.copy(alpha = pulseAlpha),
+                                Color.Transparent,
+                                Blue700.copy(alpha = pulseAlpha * 0.5f)
+                            )
+                        ),
+                        RoundedCornerShape(20.dp)
+                    )
             )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = getPhaseText(progress.phase),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(8.dp))
-            ProgressIndicator(progress = progress.progress, label = "Overall Progress")
-            Spacer(Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Phase icon ring
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .background(Green700.copy(alpha = 0.08f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = Green700,
+                        strokeWidth = 4.dp,
+                        progress = { progress.progress }
+                    )
+                }
+                Spacer(Modifier.height(14.dp))
                 Text(
-                    text = String.format("%.1f", currentSpeed),
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Green700
+                    text = getPhaseText(progress.phase),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
-                Spacer(Modifier.width(4.dp))
-                Text("Mbps", style = MaterialTheme.typography.bodyLarge, color = Gray500)
-            }
-            if (progress.currentCDN.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Testing: ${progress.currentCDN}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray500
+                Spacer(Modifier.height(12.dp))
+                // Speed display
+                Row(
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Text(
+                        text = String.format("%.1f", animatedSpeed),
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Green700
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Mbps",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray500,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                // Progress bar
+                LinearProgressIndicator(
+                    progress = { progress.progress },
+                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                    color = Green700,
+                    trackColor = Gray100
                 )
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        "${(progress.progress * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Gray500,
+                        fontWeight = FontWeight.Medium
+                    )
+                    if (progress.currentCDN.isNotEmpty()) {
+                        Surface(
+                            color = Green700.copy(alpha = 0.08f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = progress.currentCDN,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Green700,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -323,9 +417,8 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
 // ---------- Live CDN Progress (with animated bars) ----------
 @Composable
 private fun LiveCDNProgressCard(cdnResults: List<CDNEndpoint>) {
-    Card(
-        modifier = Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -366,17 +459,41 @@ private fun LiveCDNProgressCard(cdnResults: List<CDNEndpoint>) {
 @Composable
 private fun LiveCDNItem(cdn: CDNEndpoint) {
     val maxSpeed = 100.0
+    val isDone = cdn.status == TestStatus.DONE
+    val isRunning = cdn.status == TestStatus.RUNNING
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = if (isDone) 1f else (cdn.downloadSpeedMbps / maxSpeed).toFloat().coerceIn(0f, 1f),
+        animationSpec = tween(800, easing = FastOutSlowInEasing),
+        label = "cdn_progress"
+    )
+
+    val progressColor = when {
+        isDone -> Green700
+        isRunning -> Blue700
+        else -> Gray400
+    }
+
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                cdn.name,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(if (isRunning) Blue700 else if (isDone) Green700 else Gray300)
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    cdn.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
             Text(
                 when (cdn.status) {
                     TestStatus.RUNNING -> "Testing..."
@@ -385,19 +502,34 @@ private fun LiveCDNItem(cdn: CDNEndpoint) {
                 },
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
-                color = Green700
+                color = progressColor
             )
         }
-        Spacer(Modifier.height(4.dp))
-        LinearProgressIndicator(
-            progress = {
-                if (cdn.status == TestStatus.DONE) 1f
-                else (cdn.downloadSpeedMbps / maxSpeed).toFloat().coerceIn(0f, 1f)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            color = Green700,
-            trackColor = Gray200
-        )
+        Spacer(Modifier.height(6.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(Gray100)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(animatedProgress)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = if (isDone)
+                                listOf(Green700, Green500)
+                            else if (isRunning)
+                                listOf(Blue700, Blue500.copy(alpha = 0.7f))
+                            else
+                                listOf(Gray300, Gray300)
+                        ),
+                        shape = RoundedCornerShape(3.dp)
+                    )
+            )
+        }
     }
 }
 
@@ -422,9 +554,8 @@ private fun FairnessScoreCard(
         else -> Red500
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth().shadow(8.dp, RoundedCornerShape(20.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
@@ -523,9 +654,8 @@ private fun CDNPerformanceCard(
     val dlProgress = (downloadSpeed / maxSpeed).toFloat().coerceIn(0f, 1f)
     val ulProgress = (uploadSpeed / maxSpeed).toFloat().coerceIn(0f, 1f)
 
-    Card(
-        modifier = Modifier.width(180.dp).shadow(4.dp, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = CardLight),
+    ModernCard(
+        modifier = Modifier.width(180.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -791,10 +921,10 @@ fun SettingsDialog(viewModel: SpeedTestViewModel, onDismiss: () -> Unit) {
         title = { Text("Settings", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                Card(
+                ModernCard(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Gray100),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Gray100)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -839,10 +969,10 @@ fun SettingsDialog(viewModel: SpeedTestViewModel, onDismiss: () -> Unit) {
                         }
                     }
                 }
-                Card(
+                ModernCard(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Gray100),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Gray100)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

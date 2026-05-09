@@ -69,3 +69,8 @@ val GaugeBackground = Color(0xFFE2E8F0)
 
 val SurfaceVariant = Color(0xFFF1F5F9)
 val OnSurfaceVariant = Color(0xFF64748B)
+
+val CartoonBorder = Color(0xFF000000)
+val CartoonShadow = Color(0x40000000)
+val CartoonText = Color(0xFF000000)
+val CartoonWhite = Color(0xFFFFFFFF)
