@@ -48,11 +48,9 @@ fun ModernCard(
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val finalModifier = modifier.shadow(elevation + 2.dp, shape, clip = false)
-
     if (onClick != null) {
         Card(
-            modifier = finalModifier,
+            modifier = modifier,
             colors = colors,
             shape = shape,
             elevation = CardDefaults.cardElevation(defaultElevation = elevation),
@@ -60,7 +58,7 @@ fun ModernCard(
         ) { content() }
     } else {
         Card(
-            modifier = finalModifier,
+            modifier = modifier,
             colors = colors,
             shape = shape,
             elevation = CardDefaults.cardElevation(defaultElevation = elevation)
@@ -552,7 +550,7 @@ fun ProgressIndicator(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
-                .background(GaugeBackground, RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
         ) {
             Box(
                 modifier = Modifier
@@ -560,7 +558,7 @@ fun ProgressIndicator(
                     .fillMaxHeight()
                     .background(
                         brush = Brush.horizontalGradient(
-                            colors = listOf(GradientStart, GradientEnd)
+                            colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
                         ),
                         shape = RoundedCornerShape(4.dp)
                     )
@@ -822,7 +820,7 @@ fun NetworkInfoCard(
                 Icon(
                     imageVector = Icons.Default.Wifi,
                     contentDescription = null,
-                    tint = Teal500,
+                    tint = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -855,11 +853,13 @@ fun NetworkInfoCard(
                     value = location.ifEmpty { "Unknown" },
                     modifier = Modifier.weight(1f)
                 )
-                InfoItemModern(label = "Connection", value = connectionType, modifier = Modifier.weight(1f))
-            }
-            if (ispName.isNotEmpty() && ispName != "Unknown") {
-                Spacer(modifier = Modifier.height(12.dp))
-                InfoItemModern(label = "ISP", value = ispName, modifier = Modifier.fillMaxWidth())
+                if (ispName.isNotEmpty() && ispName != "Unknown") {
+                    InfoItemModern(
+                        label = "ISP",
+                        value = ispName,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }
@@ -1064,7 +1064,7 @@ fun SpeedComparisonCard(
                 Icon(
                     imageVector = if (isFaster) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
                     contentDescription = null,
-                    tint = if (isFaster) Green700 else Red500,
+                    tint = if (isFaster) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(Modifier.width(4.dp))
@@ -1072,7 +1072,7 @@ fun SpeedComparisonCard(
                     text = "${if (isFaster) "+" else ""}${String.format("%.1f", difference)}%",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (isFaster) Green700 else Red500
+                    color = if (isFaster) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
             }
         }
@@ -1089,7 +1089,7 @@ fun BandwidthDistributionChart(
     val total = cdnResults.sumOf { it.second }
     if (total <= 0) return
 
-    val colors = listOf(Blue700, Green700, Orange700, Purple700, Teal700, Red700, Pink700, Indigo700)
+    val colors = listOf(Blue500, Green500, Orange500, Purple500, Teal500, Red500, Pink500, Indigo500)
 
     ModernCard(
         modifier = modifier.fillMaxWidth(),
@@ -1103,23 +1103,21 @@ fun BandwidthDistributionChart(
             )
             Spacer(Modifier.height(12.dp))
 
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(20.dp)
+                    .clip(RoundedCornerShape(4.dp))
             ) {
-                var offset = 0f
                 cdnResults.forEachIndexed { index, (_, speed) ->
                     val fraction = (speed / total).toFloat()
                     if (fraction > 0.01f) {
                         Box(
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .fillMaxWidth(fraction)
-                                .offset(x = (offset * 100).dp)
+                                .weight(fraction)
                                 .background(colors[index % colors.size])
                         )
-                        offset += fraction
                     }
                 }
             }
@@ -1187,25 +1185,25 @@ fun ISPScoreBreakdown(
                 label = "Download Speed",
                 score = downloadScore,
                 maxScore = 40,
-                color = Blue700
+                color = MaterialTheme.colorScheme.primary
             )
             ScoreBreakdownItem(
                 label = "Latency",
                 score = latencyScore,
                 maxScore = 25,
-                color = Purple700
+                color = MaterialTheme.colorScheme.secondary
             )
             ScoreBreakdownItem(
                 label = "Connection Stability",
                 score = jitterScore,
                 maxScore = 20,
-                color = Orange700
+                color = MaterialTheme.colorScheme.tertiary
             )
             ScoreBreakdownItem(
                 label = "Connection Reliability",
                 score = packetLossScore,
                 maxScore = 15,
-                color = Red700
+                color = MaterialTheme.colorScheme.error
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
@@ -1224,9 +1222,9 @@ fun ISPScoreBreakdown(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = when {
-                        total >= 80 -> Green700
-                        total >= 60 -> Orange700
-                        else -> Red500
+                        total >= 80 -> MaterialTheme.colorScheme.primary
+                        total >= 60 -> MaterialTheme.colorScheme.tertiary
+                        else -> MaterialTheme.colorScheme.error
                     }
                 )
             }

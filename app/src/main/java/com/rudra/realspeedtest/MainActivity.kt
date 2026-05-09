@@ -1,9 +1,11 @@
 package com.rudra.realspeedtest
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -32,7 +34,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = androidx.compose.ui.platform.LocalContext.current
             val viewModel: SpeedTestViewModel = viewModel(factory = SpeedTestViewModel.Factory(context))
-            val isDarkMode by viewModel.isDarkMode.collectAsState()
+            val darkModePref by viewModel.isDarkMode.collectAsState()
+            val followSystemPref by viewModel.darkModeFollowSystem.collectAsState()
+
+            val followSystem = followSystemPref ?: (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            val manualDark = darkModePref ?: false
+            val isDarkMode = if (followSystem) isSystemInDarkTheme() else manualDark
 
             RealSpeedTestTheme(darkTheme = isDarkMode) {
                 MainScreen(

@@ -34,7 +34,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rudra.realspeedtest.data.model.*
 import com.rudra.realspeedtest.ui.components.*
 import com.rudra.realspeedtest.ui.theme.*
@@ -240,8 +239,8 @@ fun SpeedTestScreen(
                             message = "Your ISP may be limiting speed on ${result.throttledCDN}. " +
                                     "Multiple CDN tests show inconsistent speeds.",
                             icon = Icons.Default.Warning,
-                            containerColor = Orange500.copy(alpha = 0.1f),
-                            contentColor = Orange500
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
                         )
                     }
                 }
@@ -251,8 +250,8 @@ fun SpeedTestScreen(
                             title = "Inconsistent Performance",
                             message = "Unstable connection on: ${result.inconsistentEndpoints.joinToString()}",
                             icon = Icons.Default.SignalWifiBad,
-                            containerColor = FairColor.copy(alpha = 0.1f),
-                            contentColor = FairColor
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     }
                 }
@@ -283,28 +282,22 @@ fun SpeedTestScreen(
 // ---------- Start Button ----------
 @Composable
 private fun StartTestButton(onClick: () -> Unit, hasPreviousResult: Boolean) {
-    ModernCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(56.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Button(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth().height(60.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-            shape = RoundedCornerShape(20.dp)
-        ) {
-            Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(28.dp))
-            Spacer(Modifier.width(12.dp))
-            Text(
-                if (hasPreviousResult) "Run New Test" else "Start Speed Test",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(
+            if (hasPreviousResult) "Run New Test" else "Start Speed Test",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -369,7 +362,7 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
                         progress = { progress.progress }
                     )
                 }
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(16.dp))
                 Text(
                     text = getPhaseText(progress.phase),
                     style = MaterialTheme.typography.titleMedium,
@@ -382,14 +375,14 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
                 ) {
                     Text(
                         text = String.format("%.1f", animatedSpeed),
-                        fontSize = 40.sp,
+                        style = MaterialTheme.typography.displaySmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
                         "Mbps",
-                        fontSize = 16.sp,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 6.dp)
@@ -403,7 +396,7 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -564,13 +557,13 @@ private fun FairnessScoreCard(
     val (icon, color) = when {
         isThrottled -> Icons.Default.GppBad to MaterialTheme.colorScheme.error
         score >= 80 -> Icons.Default.Verified to MaterialTheme.colorScheme.primary
-        score >= 60 -> Icons.Default.CheckCircle to Orange700
+        score >= 60 -> Icons.Default.CheckCircle to MaterialTheme.colorScheme.tertiary
         else -> Icons.Default.Warning to MaterialTheme.colorScheme.error
     }
 
     val variationColor = when {
         speedVariation < 10 -> MaterialTheme.colorScheme.primary
-        speedVariation < 20 -> Orange700
+        speedVariation < 20 -> MaterialTheme.colorScheme.tertiary
         else -> MaterialTheme.colorScheme.error
     }
 
@@ -676,7 +669,7 @@ private fun CDNPerformanceCard(
     val ulProgress = (uploadSpeed / maxSpeed).toFloat().coerceIn(0f, 1f)
 
     ModernCard(
-        modifier = Modifier.width(180.dp),
+        modifier = Modifier.widthIn(min = 160.dp, max = 200.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -727,19 +720,19 @@ private fun CDNPerformanceCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Upload, null, tint = Teal700, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Upload, null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(16.dp))
                 Text(
                     "${String.format("%.1f", uploadSpeed)}",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
-                    color = Teal700
+                    color = MaterialTheme.colorScheme.tertiary
                 )
                 Text("Mbps", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             LinearProgressIndicator(
                 progress = { ulProgress },
                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                color = Teal700,
+                color = MaterialTheme.colorScheme.tertiary,
                 trackColor = MaterialTheme.colorScheme.outlineVariant
             )
             Spacer(Modifier.height(8.dp))
@@ -778,7 +771,7 @@ private fun SpeedStatsRow(result: SpeedTestResult) {
             value = String.format("%.1f", result.uploadSpeedMbps),
             unit = "Mbps",
             icon = Icons.Default.Upload,
-            color = Teal700,
+            color = MaterialTheme.colorScheme.tertiary,
             modifier = Modifier.weight(1f)
         )
     }
@@ -806,7 +799,7 @@ private fun NetworkQualityRow(result: SpeedTestResult) {
             unit = "ms",
             subtitle = "Stability",
             icon = Icons.Default.Speed,
-            color = Orange700,
+            color = MaterialTheme.colorScheme.error,
             modifier = Modifier.weight(1f)
         )
         DetailedStatCard(
@@ -824,6 +817,8 @@ private fun NetworkQualityRow(result: SpeedTestResult) {
 // ---------- Share Actions ----------
 @Composable
 private fun ShareActionsRow(context: Context, viewModel: SpeedTestViewModel) {
+    var showPreview by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -849,7 +844,7 @@ private fun ShareActionsRow(context: Context, viewModel: SpeedTestViewModel) {
                 context.startActivity(Intent.createChooser(intent, "Share Results"))
             },
             modifier = Modifier.weight(1f),
-            containerColor = Teal700
+            containerColor = MaterialTheme.colorScheme.tertiary
         )
         ActionButton(
             text = "Image",
@@ -866,7 +861,117 @@ private fun ShareActionsRow(context: Context, viewModel: SpeedTestViewModel) {
             modifier = Modifier.weight(1f),
             containerColor = MaterialTheme.colorScheme.tertiary
         )
+        ActionButton(
+            text = "Preview",
+            icon = Icons.Default.Visibility,
+            onClick = { showPreview = true },
+            modifier = Modifier.weight(1f),
+            containerColor = MaterialTheme.colorScheme.primary
+        )
     }
+
+    viewModel.currentResult.value?.let { result ->
+        if (showPreview) {
+            PreviewResultDialog(
+                result = result,
+                onDismiss = { showPreview = false }
+            )
+        }
+    }
+}
+
+@Composable
+private fun PreviewResultDialog(
+    result: SpeedTestResult,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Speed, null, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Speed Test Results Preview")
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Download / Upload
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard(
+                        title = "Download",
+                        value = String.format("%.1f", result.downloadSpeedMbps),
+                        unit = "Mbps",
+                        icon = Icons.Default.Download,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatCard(
+                        title = "Upload",
+                        value = String.format("%.1f", result.uploadSpeedMbps),
+                        unit = "Mbps",
+                        icon = Icons.Default.Upload,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // Network quality
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    DetailedStatCard(
+                        title = "Latency",
+                        value = String.format("%.0f", result.latencyMs),
+                        unit = "ms",
+                        subtitle = "Ping",
+                        icon = Icons.Default.SignalCellularAlt,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    DetailedStatCard(
+                        title = "Jitter",
+                        value = String.format("%.1f", result.jitterMs),
+                        unit = "ms",
+                        subtitle = "Stability",
+                        icon = Icons.Default.Speed,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // ISP score
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Verified, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "ISP Score: ${result.ispScore}/100 (${result.qualityLabel.name})",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        },
+        shape = RoundedCornerShape(20.dp)
+    )
 }
 
 private fun generateShareImageHtml(result: SpeedTestResult): String {
@@ -987,12 +1092,12 @@ private fun TestModeSelector(
                             ) {
                                 Text(
                                     mode.label,
-                                    fontSize = 12.sp,
+                                    style = MaterialTheme.typography.labelMedium,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
                                 Text(
                                     mode.accuracyLabel,
-                                    fontSize = 8.sp,
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = if (isSelected) color else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -1045,7 +1150,7 @@ private fun RealWorldScoreCard(
                     fontWeight = FontWeight.SemiBold,
                     color = when (stabilityGrade) {
                         StabilityGrade.ROCK_SOLID, StabilityGrade.STABLE -> MaterialTheme.colorScheme.primary
-                        StabilityGrade.MODERATE -> Orange700
+                        StabilityGrade.MODERATE -> MaterialTheme.colorScheme.tertiary
                         else -> MaterialTheme.colorScheme.error
                     }
                 )
@@ -1100,17 +1205,18 @@ private fun ExperienceStat(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
-            Spacer(Modifier.height(6.dp))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
             Text(
                 "$score",
-                fontSize = 28.sp,
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = scoreColor
             )
+            Spacer(Modifier.height(2.dp))
             Text(
                 grade,
-                fontSize = 10.sp,
+                style = MaterialTheme.typography.labelSmall,
                 color = scoreColor,
                 fontWeight = FontWeight.SemiBold
             )

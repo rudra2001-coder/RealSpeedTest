@@ -1,5 +1,6 @@
 package com.rudra.realspeedtest.ui.screens.settings
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -29,7 +30,8 @@ fun SettingsScreen(
     var autoTestEnabled by remember { mutableStateOf(viewModel.isAutoTestEnabled.value) }
     var intervalMinutes by remember { mutableStateOf(viewModel.autoTestIntervalMinutes.value.toFloat()) }
     var speedThreshold by remember { mutableStateOf(viewModel.speedThreshold.value.toFloat()) }
-    var isDarkMode by remember { mutableStateOf(viewModel.isDarkMode.value) }
+    var isDarkMode by remember { mutableStateOf(viewModel.isDarkMode.value ?: false) }
+    var followSystem by remember { mutableStateOf(viewModel.darkModeFollowSystem.value ?: (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)) }
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -66,17 +68,46 @@ fun SettingsScreen(
             SectionHeader("Appearance", Icons.Default.Palette, MaterialTheme.colorScheme.tertiary)
 
             SettingsCard {
-                SwitchSetting(
-                    icon = Icons.Default.DarkMode,
-                    iconColor = MaterialTheme.colorScheme.tertiary,
-                    title = "Dark Mode",
-                    subtitle = "Switch between light and dark theme",
-                    checked = isDarkMode,
-                    onCheckedChange = { enabled ->
-                        isDarkMode = enabled
-                        viewModel.setDarkMode(enabled)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    SwitchSetting(
+                        icon = Icons.Default.SettingsBrightness,
+                        iconColor = MaterialTheme.colorScheme.tertiary,
+                        title = "Use system theme",
+                        subtitle = "Follow system dark/light mode setting",
+                        checked = followSystem,
+                        onCheckedChange = { enabled ->
+                            followSystem = enabled
+                            viewModel.setDarkModeFollowSystem(enabled)
+                            if (enabled) viewModel.setDarkMode(null)
+                        }
+                    )
+                    if (!followSystem) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 8.dp))
+                        SwitchSetting(
+                            icon = Icons.Default.DarkMode,
+                            iconColor = MaterialTheme.colorScheme.tertiary,
+                            title = "Dark theme",
+                            subtitle = "Use dark theme",
+                            checked = isDarkMode,
+                            onCheckedChange = { enabled ->
+                                isDarkMode = enabled
+                                viewModel.setDarkMode(enabled)
+                            }
+                        )
                     }
-                )
+                } else {
+                    SwitchSetting(
+                        icon = Icons.Default.DarkMode,
+                        iconColor = MaterialTheme.colorScheme.tertiary,
+                        title = "Dark Mode",
+                        subtitle = "Switch between light and dark theme",
+                        checked = isDarkMode,
+                        onCheckedChange = { enabled ->
+                            isDarkMode = enabled
+                            viewModel.setDarkMode(enabled)
+                        }
+                    )
+                }
             }
 
             // Test Settings Section

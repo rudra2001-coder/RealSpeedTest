@@ -16,13 +16,18 @@ class PreferencesManager(private val context: Context) {
 
     companion object {
         val DARK_MODE_KEY = booleanPreferencesKey("dark_mode")
+        val DARK_MODE_FOLLOW_SYSTEM_KEY = booleanPreferencesKey("dark_mode_follow_system")
         val AUTO_TEST_ENABLED_KEY = booleanPreferencesKey("auto_test_enabled")
         val AUTO_TEST_INTERVAL_KEY = doublePreferencesKey("auto_test_interval")
         val SPEED_THRESHOLD_KEY = doublePreferencesKey("speed_threshold")
     }
 
-    val darkMode: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[DARK_MODE_KEY] ?: false
+    val darkMode: Flow<Boolean?> = context.dataStore.data.map { preferences ->
+        preferences[DARK_MODE_KEY]
+    }
+
+    val darkModeFollowSystem: Flow<Boolean?> = context.dataStore.data.map { preferences ->
+        preferences[DARK_MODE_FOLLOW_SYSTEM_KEY]
     }
 
     val autoTestEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -37,9 +42,17 @@ class PreferencesManager(private val context: Context) {
         preferences[SPEED_THRESHOLD_KEY] ?: 10.0
     }
 
-    suspend fun setDarkMode(enabled: Boolean) {
+    suspend fun setDarkMode(enabled: Boolean?) {
         context.dataStore.edit { preferences ->
-            preferences[DARK_MODE_KEY] = enabled
+            if (enabled != null) preferences[DARK_MODE_KEY] = enabled
+            else preferences.remove(DARK_MODE_KEY)
+        }
+    }
+
+    suspend fun setDarkModeFollowSystem(enabled: Boolean?) {
+        context.dataStore.edit { preferences ->
+            if (enabled != null) preferences[DARK_MODE_FOLLOW_SYSTEM_KEY] = enabled
+            else preferences.remove(DARK_MODE_FOLLOW_SYSTEM_KEY)
         }
     }
 
