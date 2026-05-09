@@ -802,7 +802,9 @@ fun NetworkInfoCard(
     publicIP: String,
     ispName: String,
     connectionType: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    city: String = "",
+    country: String = ""
 ) {
     ModernCard(
         modifier = modifier.fillMaxWidth(),
@@ -832,7 +834,26 @@ fun NetworkInfoCard(
                 InfoItemModern(label = "Connection", value = connectionType, modifier = Modifier.weight(1f))
             }
             Spacer(modifier = Modifier.height(12.dp))
-            InfoItemModern(label = "ISP", value = ispName, modifier = Modifier.fillMaxWidth())
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val location = buildString {
+                    if (city.isNotEmpty()) append(city)
+                    if (city.isNotEmpty() && country.isNotEmpty()) append(", ")
+                    if (country.isNotEmpty()) append(country)
+                }
+                InfoItemModern(
+                    label = "Location",
+                    value = location.ifEmpty { "Unknown" },
+                    modifier = Modifier.weight(1f)
+                )
+                InfoItemModern(label = "Connection", value = connectionType, modifier = Modifier.weight(1f))
+            }
+            if (ispName.isNotEmpty() && ispName != "Unknown") {
+                Spacer(modifier = Modifier.height(12.dp))
+                InfoItemModern(label = "ISP", value = ispName, modifier = Modifier.fillMaxWidth())
+            }
         }
     }
 }

@@ -18,6 +18,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rudra.realspeedtest.ui.screens.analytics.AnalyticsScreen
 import com.rudra.realspeedtest.ui.screens.history.HistoryScreen
 import com.rudra.realspeedtest.ui.screens.speedtest.SpeedTestScreen
+import com.rudra.realspeedtest.ui.screens.features.FeatureHubScreen
+import com.rudra.realspeedtest.ui.screens.settings.SettingsScreen
 import com.rudra.realspeedtest.ui.theme.*
 import com.rudra.realspeedtest.ui.screens.speedtest.SpeedTestViewModel
 
@@ -43,6 +45,7 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val viewModel: SpeedTestViewModel = viewModel(factory = SpeedTestViewModel.Factory(context))
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showSettings by remember { mutableStateOf(false) }
 
     val tabs = listOf(
         NavigationItem(
@@ -59,6 +62,11 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
             title = "Analytics",
             selectedIcon = Icons.Filled.Analytics,
             unselectedIcon = Icons.Outlined.Analytics
+        ),
+        NavigationItem(
+            title = "Features",
+            selectedIcon = Icons.Filled.Apps,
+            unselectedIcon = Icons.Outlined.Apps
         )
     )
 
@@ -66,7 +74,17 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
         0 -> Green700
         1 -> Blue700
         2 -> Purple700
+        3 -> Indigo700
         else -> Green700
+    }
+
+    // Show SettingsScreen as a full overlay when showSettings is true
+    if (showSettings) {
+        SettingsScreen(
+            viewModel = viewModel,
+            onBack = { showSettings = false }
+        )
+        return
     }
 
     Scaffold(
@@ -109,9 +127,17 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
                 .fillMaxSize()
         ) {
             when (selectedTab) {
-                0 -> SpeedTestScreen(viewModel = viewModel)
+                0 -> SpeedTestScreen(
+                    viewModel = viewModel,
+                    onOpenSettings = { showSettings = true }
+                )
                 1 -> HistoryScreen(viewModel = viewModel)
                 2 -> AnalyticsScreen(viewModel = viewModel)
+                3 -> FeatureHubScreen(
+                    viewModel = viewModel,
+                    onNavigateToTab = { tab -> selectedTab = tab },
+                    onOpenSettings = { showSettings = true }
+                )
             }
         }
     }

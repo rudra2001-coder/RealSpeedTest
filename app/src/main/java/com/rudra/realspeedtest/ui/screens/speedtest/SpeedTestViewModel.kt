@@ -20,7 +20,9 @@ import com.rudra.realspeedtest.data.model.CDNEndpoint
 import com.rudra.realspeedtest.data.model.ConnectionType
 import com.rudra.realspeedtest.data.model.NetworkInfo
 import com.rudra.realspeedtest.data.model.QualityLabel
+import com.rudra.realspeedtest.data.model.SpeedTestConfig
 import com.rudra.realspeedtest.data.model.SpeedTestResult
+import com.rudra.realspeedtest.data.model.TestMode
 import com.rudra.realspeedtest.data.model.TestProgress
 import com.rudra.realspeedtest.engine.SpeedTestEngine
 import com.rudra.realspeedtest.repository.TestHistoryRepository
@@ -74,21 +76,41 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
     private val _speedThreshold = MutableStateFlow(10.0)
     val speedThreshold: StateFlow<Double> = _speedThreshold.asStateFlow()
 
+    private val _testMode = MutableStateFlow(TestMode.QUICK)
+    val testMode: StateFlow<TestMode> = _testMode.asStateFlow()
+
     private var autoTestJob: Job? = null
     private var autoTestTimer: Timer? = null
 
     init {
         loadHistory()
+        // Listen to engine progress updates
         viewModelScope.launch {
             engine.progress.collect { progress ->
                 _testProgress.value = progress
             }
         }
+        // Listen to engine live CDN results
         viewModelScope.launch {
             engine.currentResults.collect { results ->
                 _currentResults.value = results
             }
         }
+        // Listen to engine final test result
+        viewModelScope.launch {
+            engine.testResult.collect { result ->
+                if (result != null) {
+                    _currentResult.value = result
+                    historyRepository.saveTestResult(result)
+                    loadHistory()
+                    if (result.isThrottled) triggerThrottlingAlert()
+                    if (_isAutoTestEnabled.value) checkSpeedThreshold(result)
+                    triggerHapticFeedback()
+                    _isTestRunning.value = false
+                }
+            }
+        }
+        // Read persisted preferences
         viewModelScope.launch {
             preferencesManager.darkMode.collect { isDark ->
                 _isDarkMode.value = isDark
@@ -97,21 +119,30 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
     }
 
     fun triggerHapticFeedback() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(100)
-        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(50)
+            }
+        } catch (_: Exception) { }
     }
 
     fun triggerThrottlingAlert() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 100, 100), -1))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(longArrayOf(0, 100, 100, 100), -1)
-        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 100, 100), -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(longArrayOf(0, 100, 100, 100), -1)
+            }
+        } catch (_: Exception) { }
+    }
+
+    fun setTestMode(mode: TestMode) {
+        _testMode.value = mode
+        engine.updateConfig(SpeedTestConfig(testMode = mode))
     }
 
     fun startTest() {
@@ -121,53 +152,7 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
         _currentResult.value = null
         _currentResults.value = emptyList()
 
-        viewModelScope.launch {
-            engine.startLiveTest(viewModelScope).join()
-
-            val avgSpeed = _testProgress.value.overallSpeedMbps
-            val cdnResults = _currentResults.value
-
-            val pingResult = engine.measureLatency()
-            val jitterResult = engine.measureJitter()
-            val packetLossResult = engine.measurePacketLoss()
-
-            val result = SpeedTestResult(
-                downloadSpeedMbps = avgSpeed,
-                uploadSpeedMbps = _testProgress.value.currentSpeedMbps,
-                latencyMs = pingResult,
-                jitterMs = jitterResult,
-                packetLossPercent = packetLossResult,
-                ispScore = 0,
-                qualityLabel = QualityLabel.UNKNOWN,
-                cdnResults = cdnResults,
-                networkInfo = engine.getNetworkInfo()
-            )
-            val speedVariation = engine.calculateCoefficientOfVariation(cdnResults)
-            val throttling = engine.detectThrottling(cdnResults)
-            _currentResult.value = result.copy(
-                ispScore = engine.calculateISPScore(
-                    result.downloadSpeedMbps, result.latencyMs, result.jitterMs, result.packetLossPercent
-                ),
-                qualityLabel = engine.getQualityLabel(result.ispScore),
-                speedVariationPercent = speedVariation,
-                isThrottled = throttling.first,
-                throttledCDN = throttling.second,
-                inconsistentEndpoints = engine.findInconsistentEndpoints(cdnResults)
-            )
-            _currentResult.value?.let { result ->
-                historyRepository.saveTestResult(result)
-                if (result.isThrottled) {
-                    triggerThrottlingAlert()
-                }
-            }
-            loadHistory()
-            _isTestRunning.value = false
-            triggerHapticFeedback()
-
-            if (_isAutoTestEnabled.value && _currentResult.value != null) {
-                checkSpeedThreshold(_currentResult.value!!)
-            }
-        }
+        engine.startLiveTest(viewModelScope)
     }
 
     fun startLiveTest() = startTest()
@@ -179,21 +164,15 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
     fun observeLiveResults(): StateFlow<List<CDNEndpoint>> = _currentResults
 
     fun runUploadTest() {
-        viewModelScope.launch {
-            engine.runUploadTest()
-        }
+        viewModelScope.launch { engine.runUploadTest() }
     }
 
     fun measureJitter() {
-        viewModelScope.launch {
-            engine.measureJitter()
-        }
+        viewModelScope.launch { engine.measureJitter() }
     }
 
     fun measurePacketLoss() {
-        viewModelScope.launch {
-            engine.measurePacketLoss()
-        }
+        viewModelScope.launch { engine.measurePacketLoss() }
     }
 
     fun saveTestResult(result: SpeedTestResult) {
@@ -265,19 +244,17 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
 
     fun findInconsistentEndpoints(): List<String> = engine.findInconsistentEndpoints(_currentResults.value)
 
-    fun flagSuspiciousCDN(): List<String> = engine.flagSuspiciousCDN(_currentResults.value)
-
     fun exportAsText(): String {
         return _currentResult.value?.let { engine.exportAsText(it) } ?: ""
     }
 
     fun getNetworkInfo(): NetworkInfo = engine.getNetworkInfo()
 
-    fun getPublicIP(): String = engine.getPublicIP()
+    fun getPublicIP(): String = engine.getNetworkInfo().publicIP
 
-    fun getISPInfo(): String = engine.getISPInfo()
+    fun getISPInfo(): String = engine.getNetworkInfo().ispName
 
-    fun getConnectionType(): ConnectionType = engine.getConnectionType()
+    fun getConnectionType(): ConnectionType = engine.getNetworkInfo().connectionType
 
     fun scheduleAutoTest(intervalMinutes: Int) {
         _isAutoTestEnabled.value = true
@@ -287,9 +264,7 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
         autoTestTimer?.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 if (_isAutoTestEnabled.value) {
-                    viewModelScope.launch {
-                        startTest()
-                    }
+                    viewModelScope.launch { startTest() }
                 }
             }
         }, intervalMinutes * 60 * 1000L, intervalMinutes * 60 * 1000L)
@@ -302,8 +277,8 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
     }
 
     fun checkSpeedThreshold(result: SpeedTestResult) {
-        if (result.downloadSpeedMbps < _speedThreshold.value) {
-            // Alert would be handled by notification system
+        if (result.downloadSpeedMbps < _speedThreshold.value && _speedThreshold.value > 0) {
+            // Alert handled by notification system
         }
     }
 

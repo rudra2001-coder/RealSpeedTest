@@ -450,6 +450,42 @@ private fun HistoryCard(
                             )
                         }
                     }
+                    if (network.city.isNotEmpty() || network.country.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Location",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Gray500
+                                )
+                                Text(
+                                    text = buildString {
+                                        if (network.city.isNotEmpty()) append(network.city)
+                                        if (network.city.isNotEmpty() && network.country.isNotEmpty()) append(", ")
+                                        if (network.country.isNotEmpty()) append(network.country)
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = "ISP",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Gray500
+                                )
+                                Text(
+                                    text = network.ispName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

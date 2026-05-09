@@ -43,6 +43,7 @@ import com.rudra.realspeedtest.ui.theme.*
 @Composable
 fun SpeedTestScreen(
     viewModel: SpeedTestViewModel,
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -50,8 +51,7 @@ fun SpeedTestScreen(
     val isRunning by viewModel.isTestRunning.collectAsState()
     val currentResult by viewModel.currentResult.collectAsState()
     val cdnResults by viewModel.currentResults.collectAsState()
-
-    var showSettingsDialog by remember { mutableStateOf(false) }
+    val testMode by viewModel.testMode.collectAsState()
 
     Scaffold(
         topBar = {
@@ -71,7 +71,7 @@ fun SpeedTestScreen(
                     IconButton(onClick = { viewModel.toggleDarkMode() }) {
                         Icon(Icons.Default.DarkMode, "Dark Mode", tint = Color.White)
                     }
-                    IconButton(onClick = { showSettingsDialog = true }) {
+                    IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Default.Settings, "Settings", tint = Color.White)
                     }
                 },
@@ -96,6 +96,16 @@ fun SpeedTestScreen(
                     speed = testProgress.overallSpeedMbps,
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
+
+            // Test mode selector (only when idle)
+            if (!isRunning) {
+                item {
+                    TestModeSelector(
+                        selectedMode = testMode,
+                        onModeSelected = { viewModel.setTestMode(it) }
+                    )
+                }
             }
 
             // Start / Progress toggle
@@ -239,7 +249,9 @@ fun SpeedTestScreen(
                         NetworkInfoCard(
                             publicIP = network.publicIP,
                             ispName = network.ispName,
-                            connectionType = network.connectionType.name
+                            connectionType = network.connectionType.name,
+                            city = network.city,
+                            country = network.country
                         )
                     }
                 }
@@ -252,12 +264,6 @@ fun SpeedTestScreen(
         }
     }
 
-    if (showSettingsDialog) {
-        SettingsDialog(
-            viewModel = viewModel,
-            onDismiss = { showSettingsDialog = false }
-        )
-    }
 }
 
 // ---------- Start Button ----------
@@ -898,6 +904,65 @@ private fun getScoreColor(score: Int): String = when {
     else -> "#EF4444"
 }
 
+// ---------- Test Mode Selector ----------
+@Composable
+private fun TestModeSelector(
+    selectedMode: TestMode,
+    onModeSelected: (TestMode) -> Unit
+) {
+    ModernCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Gray100)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TestMode.entries.forEach { mode ->
+                    val isSelected = mode == selectedMode
+                    val color = when (mode) {
+                        TestMode.QUICK -> Green700
+                        TestMode.NORMAL -> Blue700
+                        TestMode.THOROUGH -> Purple700
+                    }
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { onModeSelected(mode) },
+                        label = {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    mode.label,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                                Text(
+                                    mode.description.substringBefore(" —"),
+                                    fontSize = 9.sp,
+                                    color = if (isSelected) color.copy(alpha = 0.7f) else Gray400
+                                )
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = color.copy(alpha = 0.12f),
+                            selectedLabelColor = color
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (isSelected) color.copy(alpha = 0.4f) else Gray300,
+                            selectedBorderColor = color,
+                            enabled = true,
+                            selected = isSelected
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
 // ---------- Helpers ----------
 private fun getPhaseText(phase: TestPhase): String = when (phase) {
     TestPhase.IDLE -> "Ready"
@@ -908,115 +973,3 @@ private fun getPhaseText(phase: TestPhase): String = when (phase) {
     TestPhase.COMPLETED -> "Test Complete!"
 }
 
-// ---------- Settings Dialog (unchanged) ----------
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SettingsDialog(viewModel: SpeedTestViewModel, onDismiss: () -> Unit) {
-    var autoTestEnabled by remember { mutableStateOf(viewModel.isAutoTestEnabled.value) }
-    var intervalMinutes by remember { mutableStateOf(viewModel.autoTestIntervalMinutes.value.toFloat()) }
-    var speedThreshold by remember { mutableStateOf(viewModel.speedThreshold.value.toFloat()) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Settings", fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                ModernCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Gray100)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Autorenew, null, tint = Green700)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Auto Test", fontWeight = FontWeight.Medium)
-                            }
-                            Switch(
-                                checked = autoTestEnabled,
-                                onCheckedChange = {
-                                    autoTestEnabled = it
-                                    if (it) viewModel.scheduleAutoTest(intervalMinutes.toInt())
-                                    else viewModel.cancelAutoTest()
-                                },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Green700,
-                                    checkedTrackColor = Green200
-                                )
-                            )
-                        }
-                        if (autoTestEnabled) {
-                            Spacer(Modifier.height(12.dp))
-                            Text(
-                                "Interval: ${intervalMinutes.toInt()} minutes",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray600
-                            )
-                            Slider(
-                                value = intervalMinutes,
-                                onValueChange = { intervalMinutes = it },
-                                valueRange = 5f..120f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = Green700,
-                                    activeTrackColor = Green700
-                                )
-                            )
-                        }
-                    }
-                }
-                ModernCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Gray100)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Speed, null, tint = Orange700)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Speed Alert Threshold", fontWeight = FontWeight.Medium)
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            "${speedThreshold.toInt()} Mbps",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Orange700
-                        )
-                        Slider(
-                            value = speedThreshold,
-                            onValueChange = { speedThreshold = it },
-                            valueRange = 1f..100f,
-                            colors = SliderDefaults.colors(
-                                thumbColor = Orange700,
-                                activeTrackColor = Orange700
-                            )
-                        )
-                        Text(
-                            "Get notified when speed drops below this threshold",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Gray500
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    viewModel.setSpeedThreshold(speedThreshold.toDouble())
-                    onDismiss()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Green700)
-            ) { Text("Save") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Gray600) }
-        },
-        shape = RoundedCornerShape(20.dp)
-    )
-}

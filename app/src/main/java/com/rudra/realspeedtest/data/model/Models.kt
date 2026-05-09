@@ -2,31 +2,39 @@ package com.rudra.realspeedtest.data.model
 
 import java.util.UUID
 
+enum class TestMode(val label: String, val description: String, val maxMsPerCdn: Int) {
+    QUICK("Quick", "~15s — Standard test", 3000),
+    NORMAL("Normal", "~30s — More data per CDN", 6000),
+    THOROUGH("Thorough", "~60s — Maximum accuracy", 10000)
+}
+
 data class SpeedTestConfig(
+    val testMode: TestMode = TestMode.QUICK,
     val downloadFileSizeMB: Int = 10,
     val uploadFileSizeMB: Int = 5,
     val testDurationSeconds: Int = 10,
     val cdnEndpoints: List<String> = listOf(
-        "https://speed.cloudflare.com/__down?bytes=10000000",
-        "https://proof.ovh.net/files/10Mb.dat",
-        "https://speed.hetzner.de/10MB.bin",
-        "http://speedtest.tele2.net/10MB.zip",
-        "https://speedtest.t-online.de/10000000",
-        "https://lorem.ch/data/10mb.bin",
-        "https://speed-ovh.com/10MB",
-        "http://mirror.seasonic.se/10MB.bin",
-        "http://speedtest.watsonbroadband.com/10MB.txt",
-        "https://cdnpacketloss-test.example.com/file"
+        "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
+        "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js",
+        "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js",
+        "https://unpkg.com/react@18/umd/react.production.min.js",
+        "https://code.jquery.com/jquery-3.7.1.min.js",
+        "https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js",
+        "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js",
+        "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js",
+        "https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"
     ),
     val uploadEndpoints: List<String> = listOf(
         "https://httpbin.org/post",
-        "https://speed.cloudflare.com/__up",
         "https://httpbin.org/upload"
     ),
     val jitterTestPackets: Int = 20,
     val packetLossTestPackets: Int = 50,
     val multiThreadCount: Int = 4
-)
+) {
+    val maxMsPerCdn: Int get() = testMode.maxMsPerCdn
+}
 
 data class CDNEndpoint(
     val name: String,
