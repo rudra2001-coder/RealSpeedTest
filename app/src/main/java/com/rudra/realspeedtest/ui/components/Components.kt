@@ -37,8 +37,9 @@ fun SpeedGauge(
     modifier: Modifier = Modifier,
     size: Dp = 220.dp
 ) {
+    val safeSpeed = speed.toFloat().takeIf { it.isFinite() } ?: 0f
     val animatedSpeed by animateFloatAsState(
-        targetValue = speed.toFloat(),
+        targetValue = safeSpeed,
         animationSpec = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
         label = "speed"
     )

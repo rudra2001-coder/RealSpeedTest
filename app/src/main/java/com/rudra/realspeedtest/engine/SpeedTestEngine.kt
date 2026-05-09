@@ -55,8 +55,9 @@ class SpeedTestEngine(private val context: Context) {
 
             _progress.value = _progress.value.copy(phase = TestPhase.COMPLETED, progress = 1f)
 
-            val avgSpeed = cdnResults.filter { it.status == TestStatus.DONE }
-                .map { it.downloadSpeedMbps }.average().coerceAtLeast(0.0)
+            val doneSpeeds = cdnResults.filter { it.status == TestStatus.DONE }
+                .map { it.downloadSpeedMbps }
+            val avgSpeed = if (doneSpeeds.isNotEmpty()) doneSpeeds.average() else 0.0
 
             val ispScore = calculateISPScore(avgSpeed, pingResult, jitterResult, packetLossResult)
             val qualityLabel = getQualityLabel(ispScore)
@@ -92,10 +93,13 @@ class SpeedTestEngine(private val context: Context) {
 
     fun updateEndpointProgress(endpointName: String, progress: Float, speed: Double) {
         val current = _progress.value
+        val safeProgress = if (current.totalCDNs > 0) {
+            (current.currentCDNIndex + progress) / current.totalCDNs
+        } else 0f
         _progress.value = current.copy(
             currentCDN = endpointName,
-            progress = (current.currentCDNIndex + progress) / current.totalCDNs,
-            currentSpeedMbps = speed
+            progress = safeProgress,
+            currentSpeedMbps = speed.coerceAtLeast(0.0)
         )
     }
 
