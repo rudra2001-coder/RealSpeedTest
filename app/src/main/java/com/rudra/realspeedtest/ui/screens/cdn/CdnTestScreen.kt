@@ -199,8 +199,8 @@ private fun TestingContent(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f, targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(animation = tween(800, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse),
+        initialValue = 0.4f, targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(animation = tween(2000, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse),
         label = "pulse"
     )
 

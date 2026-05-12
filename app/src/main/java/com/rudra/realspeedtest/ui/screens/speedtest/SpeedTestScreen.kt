@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,6 +55,7 @@ fun SpeedTestScreen(
     val currentResult by viewModel.currentResult.collectAsState()
     val cdnResults by viewModel.currentResults.collectAsState()
     val testMode by viewModel.testMode.collectAsState()
+    val errorState by viewModel.errorState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -70,10 +73,10 @@ fun SpeedTestScreen(
                 },
                 actions = {
                     IconButton(onClick = { viewModel.toggleDarkMode() }) {
-                        Icon(Icons.Default.DarkMode, "Dark Mode", tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(Icons.Default.DarkMode, "Dark Mode", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, "Settings", tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(Icons.Default.Settings, "Settings", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -99,6 +102,54 @@ fun SpeedTestScreen(
                 )
             }
 
+            // Error state banner
+            errorState?.let { errMsg ->
+                item(key = "error_banner") {
+                    AlertBanner(
+                        title = "Test Failed",
+                        message = errMsg,
+                        icon = Icons.Default.Warning,
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+
+            // Empty state (when no results and not running)
+            if (currentResult == null && !isRunning) {
+                item {
+                    ModernCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                Icons.Default.WifiFind, null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                "Ready to Test",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Run a speed test to measure your\nconnection performance across CDNs",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+
             // Test mode selector (only when idle)
             if (!isRunning) {
                 item {
@@ -117,7 +168,10 @@ fun SpeedTestScreen(
                     exit = fadeOut() + shrinkVertically()
                 ) {
                     StartTestButton(
-                        onClick = { viewModel.startTest() },
+                        onClick = {
+                            viewModel.triggerHapticFeedback()
+                            viewModel.startTest()
+                        },
                         hasPreviousResult = currentResult != null
                     )
                 }
@@ -204,17 +258,19 @@ fun SpeedTestScreen(
                     }
                     // Horizontal scrollable cards for CDN results (compact view)
                     item {
+                        val maxSpeed = result.cdnResults.maxOfOrNull { it.downloadSpeedMbps }?.coerceAtLeast(1.0) ?: 100.0
                         LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(horizontal = 0.dp)
                         ) {
-                            items(result.cdnResults) { cdn ->
+                            items(result.cdnResults, key = { it.name }) { cdn ->
                                 CDNPerformanceCard(
                                     name = cdn.name,
                                     downloadSpeed = cdn.downloadSpeedMbps,
                                     uploadSpeed = cdn.uploadSpeedMbps,
                                     latency = cdn.latencyMs,
-                                    category = cdn.category.label
+                                    category = cdn.category.label,
+                                    maxSpeed = maxSpeed
                                 )
                             }
                         }
@@ -274,6 +330,27 @@ fun SpeedTestScreen(
                 item {
                     ShareActionsRow(context = context, viewModel = viewModel)
                 }
+
+                // Last tested timestamp
+                item {
+                    val now = System.currentTimeMillis()
+                    val diff = now - result.timestamp
+                    val minutes = diff / 60000
+                    val hours = minutes / 60
+                    val timeAgo = when {
+                        minutes < 1 -> "Just now"
+                        minutes < 60 -> "${minutes}m ago"
+                        hours < 24 -> "${hours}h ago"
+                        else -> "${hours / 24}d ago"
+                    }
+                    Text(
+                        text = "Last tested $timeAgo",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -283,14 +360,24 @@ fun SpeedTestScreen(
 // ---------- Start Button ----------
 @Composable
 private fun StartTestButton(onClick: () -> Unit, hasPreviousResult: Boolean) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val btnScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = tween(100),
+        label = "btn_scale"
+    )
+
     Button(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(56.dp),
+        modifier = Modifier.fillMaxWidth().height(56.dp)
+            .graphicsLayer(scaleX = btnScale, scaleY = btnScale),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        interactionSource = interactionSource
     ) {
         Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(24.dp))
         Spacer(Modifier.width(8.dp))
@@ -307,10 +394,10 @@ private fun StartTestButton(onClick: () -> Unit, hasPreviousResult: Boolean) {
 private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
     val infiniteTransition = rememberInfiniteTransition(label = "test_pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.1f,
-        targetValue = 0.25f,
+        initialValue = 0.08f,
+        targetValue = 0.18f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
+            animation = tween(2000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulse_bg"
@@ -431,6 +518,7 @@ private fun TestInProgressCard(progress: TestProgress, currentSpeed: Double) {
 // ---------- Live CDN Progress (with animated bars) ----------
 @Composable
 private fun LiveCDNProgressCard(cdnResults: List<CDNEndpoint>) {
+    val maxSpeed = cdnResults.maxOfOrNull { it.downloadSpeedMbps }?.coerceAtLeast(1.0) ?: 100.0
     ModernCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
@@ -461,7 +549,7 @@ private fun LiveCDNProgressCard(cdnResults: List<CDNEndpoint>) {
             }
             Spacer(Modifier.height(12.dp))
             cdnResults.take(5).forEach { cdn ->
-                LiveCDNItem(cdn)
+                LiveCDNItem(cdn, maxSpeed)
                 if (cdn != cdnResults.take(5).last()) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 }
@@ -471,13 +559,18 @@ private fun LiveCDNProgressCard(cdnResults: List<CDNEndpoint>) {
 }
 
 @Composable
-private fun LiveCDNItem(cdn: CDNEndpoint) {
-    val maxSpeed = 100.0
+private fun LiveCDNItem(cdn: CDNEndpoint, maxSpeed: Double) {
     val isDone = cdn.status == TestStatus.DONE
     val isRunning = cdn.status == TestStatus.RUNNING
 
+    val targetProgress = when {
+        isDone -> 1f
+        isRunning -> (cdn.downloadSpeedMbps / maxSpeed).toFloat()
+        else -> 0f
+    }.coerceIn(0.05f, 1f)
+
     val animatedProgress by animateFloatAsState(
-        targetValue = if (isDone) 1f else (cdn.downloadSpeedMbps / maxSpeed).toFloat().coerceIn(0f, 1f),
+        targetValue = targetProgress,
         animationSpec = tween(800, easing = FastOutSlowInEasing),
         label = "cdn_progress"
     )
@@ -663,9 +756,9 @@ private fun CDNPerformanceCard(
     downloadSpeed: Double,
     uploadSpeed: Double = 0.0,
     latency: Double,
-    category: String = ""
+    category: String = "",
+    maxSpeed: Double = 100.0
 ) {
-    val maxSpeed = 100.0 // visual reference
     val dlProgress = (downloadSpeed / maxSpeed).toFloat().coerceIn(0f, 1f)
     val ulProgress = (uploadSpeed / maxSpeed).toFloat().coerceIn(0f, 1f)
 
@@ -848,8 +941,8 @@ private fun ShareActionsRow(context: Context, viewModel: SpeedTestViewModel) {
             containerColor = MaterialTheme.colorScheme.tertiary
         )
         ActionButton(
-            text = "Image",
-            icon = Icons.Default.Image,
+            text = "HTML",
+            icon = Icons.Default.Code,
             onClick = {
                 val result = viewModel.currentResult.value ?: return@ActionButton
                 val htmlContent = generateShareImageHtml(result)
@@ -857,7 +950,7 @@ private fun ShareActionsRow(context: Context, viewModel: SpeedTestViewModel) {
                     type = "text/html"
                     putExtra(Intent.EXTRA_TEXT, htmlContent)
                 }
-                context.startActivity(Intent.createChooser(intent, "Share as Image"))
+                context.startActivity(Intent.createChooser(intent, "Share as HTML"))
             },
             modifier = Modifier.weight(1f),
             containerColor = MaterialTheme.colorScheme.tertiary
@@ -1040,13 +1133,6 @@ private fun TestModeSelector(
     selectedMode: TestMode,
     onModeSelected: (TestMode) -> Unit
 ) {
-    val transition = rememberInfiniteTransition(label = "mode_pulse")
-    val pulse by transition.animateFloat(
-        initialValue = 1f, targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
-        label = "pulse"
-    )
-
     ModernCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),

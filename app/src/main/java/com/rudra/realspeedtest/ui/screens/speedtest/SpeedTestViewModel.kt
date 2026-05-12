@@ -83,6 +83,9 @@ class SpeedTestViewModel(private val context: Context) : ViewModel() {
     private val _testMode = MutableStateFlow(TestMode.QUICK)
     val testMode: StateFlow<TestMode> = _testMode.asStateFlow()
 
+    private val _errorState = MutableStateFlow<String?>(null)
+    val errorState: StateFlow<String?> = _errorState.asStateFlow()
+
     private var autoTestJob: Job? = null
     private var autoTestTimer: Timer? = null
 
@@ -110,8 +113,10 @@ class SpeedTestViewModel(private val context: Context) : ViewModel() {
                     if (result.isThrottled) triggerThrottlingAlert()
                     if (_isAutoTestEnabled.value) checkSpeedThreshold(result)
                     triggerHapticFeedback()
-                    _isTestRunning.value = false
+                } else {
+                    _errorState.value = "Test failed to complete"
                 }
+                _isTestRunning.value = false
             }
         }
         // Read persisted preferences
@@ -168,8 +173,16 @@ class SpeedTestViewModel(private val context: Context) : ViewModel() {
         _isTestRunning.value = true
         _currentResult.value = null
         _currentResults.value = emptyList()
+        _errorState.value = null
 
-        engine.startLiveTest(viewModelScope)
+        viewModelScope.launch {
+            try {
+                engine.startLiveTest(viewModelScope)
+            } catch (e: Exception) {
+                _errorState.value = e.message ?: "Test failed unexpectedly"
+                _isTestRunning.value = false
+            }
+        }
     }
 
     fun startLiveTest() = startTest()

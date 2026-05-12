@@ -82,10 +82,10 @@ fun SpeedGauge(
 
     val infiniteTransition = rememberInfiniteTransition(label = "gauge_pulse")
     val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.7f,
+        initialValue = 0.2f,
+        targetValue = 0.5f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1800, easing = FastOutSlowInEasing),
+            animation = tween(2500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "glow"
@@ -116,7 +116,7 @@ fun SpeedGauge(
         initialValue = 0f,
         targetValue = 100f,
         animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = FastOutSlowInEasing),
+            animation = tween(3000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "gradient"
@@ -728,10 +728,10 @@ fun AnimatedProgressRing(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 1f,
+        initialValue = 0.4f,
+        targetValue = 0.8f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000),
+            animation = tween(2000),
             repeatMode = RepeatMode.Reverse
         ),
         label = "alpha"
