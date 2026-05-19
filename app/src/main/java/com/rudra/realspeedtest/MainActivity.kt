@@ -73,13 +73,7 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
         )
     )
 
-    val navBarColor = when (selectedTab) {
-        0 -> Green700
-        1 -> Blue700
-        2 -> Purple700
-        3 -> Indigo700
-        else -> Green700
-    }
+    val selectedColor = MaterialTheme.colorScheme.primary
 
     // Show CdnTestScreen overlay
     if (showCdnTest) {
@@ -103,8 +97,8 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
     Scaffold(
         bottomBar = {
             NavigationBar(
-                containerColor = CardLight,
-                tonalElevation = 8.dp
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = NavigationBarDefaults.Elevation
             ) {
                 tabs.forEachIndexed { index, item ->
                     NavigationBarItem(
@@ -119,15 +113,16 @@ fun MainScreen(onToggleDarkMode: () -> Unit) {
                         label = {
                             Text(
                                 text = item.title,
-                                fontWeight = if (selectedTab == index) FontWeight.SemiBold else FontWeight.Normal
+                                fontWeight = if (selectedTab == index) FontWeight.SemiBold else FontWeight.Normal,
+                                fontSize = MaterialTheme.typography.labelSmall.fontSize
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = navBarColor,
-                            selectedTextColor = navBarColor,
-                            indicatorColor = navBarColor.copy(alpha = 0.1f),
-                            unselectedIconColor = Gray500,
-                            unselectedTextColor = Gray500
+                            selectedIconColor = selectedColor,
+                            selectedTextColor = selectedColor,
+                            indicatorColor = selectedColor.copy(alpha = 0.1f),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                 }

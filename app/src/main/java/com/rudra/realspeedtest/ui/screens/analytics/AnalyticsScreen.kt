@@ -7,12 +7,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -47,18 +47,18 @@ fun AnalyticsScreen(
                         Icon(
                             imageVector = Icons.Default.Analytics,
                             contentDescription = null,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(24.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             "Analytics",
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Purple700,
-                    titleContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -84,24 +84,7 @@ fun AnalyticsScreen(
                     }
 
                     item {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                color = Purple700.copy(alpha = 0.12f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Dns, null,
-                                    tint = Purple700,
-                                    modifier = Modifier.padding(6.dp).size(18.dp)
-                                )
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                text = "CDN Performance Details",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        SectionHeader(title = "CDN Performance Details")
                     }
 
                     items(currentResults) { cdn ->
@@ -111,24 +94,7 @@ fun AnalyticsScreen(
 
                 if (history.size >= 2) {
                     item {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                color = Blue700.copy(alpha = 0.12f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.ShowChart, null,
-                                    tint = Blue700,
-                                    modifier = Modifier.padding(6.dp).size(18.dp)
-                                )
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                text = "Speed Over Time",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        SectionHeader(title = "Speed Over Time")
                     }
 
                     item {
@@ -157,27 +123,28 @@ private fun EmptyAnalyticsState(modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .background(Purple100, RoundedCornerShape(24.dp)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(24.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Analytics,
                     contentDescription = null,
                     modifier = Modifier.size(56.dp),
-                    tint = Purple500
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "No Analytics Yet",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Run at least 2 speed tests to see\ndetailed analytics and trends.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Gray500,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
@@ -210,16 +177,17 @@ private fun CDNPerformanceOverview(cdnResults: List<CDNEndpoint>) {
                     Text(
                         text = "Current Test Overview",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "${cdnResults.size} CDN endpoints tested",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Surface(
-                    color = Green700.copy(alpha = 0.1f),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
@@ -227,7 +195,7 @@ private fun CDNPerformanceOverview(cdnResults: List<CDNEndpoint>) {
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = Green700
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
@@ -242,7 +210,7 @@ private fun CDNPerformanceOverview(cdnResults: List<CDNEndpoint>) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            HorizontalDivider(color = Gray200)
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
@@ -262,7 +230,7 @@ private fun CDNPerformanceOverview(cdnResults: List<CDNEndpoint>) {
                 OverviewStatItem(
                     label = "Avg Latency",
                     value = String.format("%.0f", avgLatency),
-                    color = Purple700
+                    color = MaterialTheme.colorScheme.tertiary
                 )
             }
         }
@@ -279,7 +247,7 @@ private fun OverviewStatItem(
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = Gray500
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -291,7 +259,7 @@ private fun OverviewStatItem(
         Text(
             text = if (label.contains("Latency")) "ms" else "Mbps",
             style = MaterialTheme.typography.bodySmall,
-            color = Gray500
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -334,7 +302,8 @@ private fun CDNPerformanceCard(cdn: CDNEndpoint) {
                         Text(
                             text = cdn.name,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = when (cdn.status) {
@@ -358,8 +327,8 @@ private fun CDNPerformanceCard(cdn: CDNEndpoint) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(12.dp)
-                        .background(Gray200, RoundedCornerShape(6.dp))
+                        .height(10.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(5.dp))
                 ) {
                     Box(
                         modifier = Modifier
@@ -369,7 +338,7 @@ private fun CDNPerformanceCard(cdn: CDNEndpoint) {
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(speedColor.copy(alpha = 0.7f), speedColor)
                                 ),
-                                shape = RoundedCornerShape(6.dp)
+                                shape = RoundedCornerShape(5.dp)
                             )
                     )
                 }
@@ -381,12 +350,14 @@ private fun CDNPerformanceCard(cdn: CDNEndpoint) {
                     Text(
                         text = "Speed: ${String.format("%.1f", cdn.downloadSpeedMbps)} Mbps",
                         style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Latency: ${String.format("%.0f", cdn.latencyMs)} ms",
                         style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -412,23 +383,27 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
                     Text(
                         text = "Download Speed Trend",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Last ${history.size} tests",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Icon(
-                    imageVector = Icons.Default.ShowChart,
-                    contentDescription = null,
-                    tint = Blue700,
-                    modifier = Modifier.size(28.dp)
-                )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            val primaryColor = MaterialTheme.colorScheme.primary
+            val surfaceColor = MaterialTheme.colorScheme.surface
 
             Canvas(
                 modifier = Modifier
@@ -443,8 +418,8 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
 
                 val gradient = Brush.verticalGradient(
                     colors = listOf(
-                        Blue700.copy(alpha = 0.3f),
-                        Blue700.copy(alpha = 0f)
+                        primaryColor.copy(alpha = 0.3f),
+                        primaryColor.copy(alpha = 0f)
                     )
                 )
 
@@ -464,17 +439,12 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
                 history.forEachIndexed { index, result ->
                     val x = index * stepX
                     val y = size.height - ((result.downloadSpeedMbps - minSpeed) / range * size.height).toFloat()
-
-                    if (index == 0) {
-                        linePath.moveTo(x, y)
-                    } else {
-                        linePath.lineTo(x, y)
-                    }
+                    if (index == 0) linePath.moveTo(x, y)
+                    else linePath.lineTo(x, y)
                 }
-
                 drawPath(
                     path = linePath,
-                    color = Blue700,
+                    color = primaryColor,
                     style = Stroke(width = 4f, cap = StrokeCap.Round)
                 )
 
@@ -482,12 +452,12 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
                     val x = index * stepX
                     val y = size.height - ((result.downloadSpeedMbps - minSpeed) / range * size.height).toFloat()
                     drawCircle(
-                        color = Blue700,
+                        color = primaryColor,
                         radius = 8f,
                         center = Offset(x, y)
                     )
                     drawCircle(
-                        color = Color.White,
+                        color = surfaceColor,
                         radius = 4f,
                         center = Offset(x, y)
                     )
@@ -502,12 +472,12 @@ private fun SpeedHistoryChart(history: List<SpeedTestResult>) {
                 Text(
                     text = "Oldest",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray500
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "Latest",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Gray500
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -532,7 +502,8 @@ private fun StatisticsCard(history: List<SpeedTestResult>) {
             Text(
                 text = "Statistics",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -545,14 +516,14 @@ private fun StatisticsCard(history: List<SpeedTestResult>) {
                     label = "Avg Download",
                     value = String.format("%.1f", avgDownload),
                     unit = "Mbps",
-                    color = Blue700,
+                    color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.weight(1f)
                 )
                 StatBox(
                     label = "Avg Upload",
                     value = String.format("%.1f", avgUpload),
                     unit = "Mbps",
-                    color = Teal700,
+                    color = ExcellentColor,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -567,7 +538,7 @@ private fun StatisticsCard(history: List<SpeedTestResult>) {
                     label = "Avg Latency",
                     value = String.format("%.0f", avgLatency),
                     unit = "ms",
-                    color = Purple700,
+                    color = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.weight(1f)
                 )
                 StatBox(
@@ -618,7 +589,7 @@ private fun StatisticsCard(history: List<SpeedTestResult>) {
                     label = "Total Tests",
                     value = "${history.size}",
                     unit = "tests",
-                    color = Gray600,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -637,7 +608,7 @@ private fun StatBox(
     ModernCard(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Gray100)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -646,22 +617,19 @@ private fun StatBox(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray500
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = value,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = color
-                )
-                Spacer(modifier = Modifier.width(2.dp))
-            }
+            Text(
+                text = value,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
             Text(
                 text = unit,
                 style = MaterialTheme.typography.bodySmall,
-                color = Gray500
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

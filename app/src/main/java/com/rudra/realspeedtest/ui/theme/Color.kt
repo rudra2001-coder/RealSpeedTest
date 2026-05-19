@@ -2,6 +2,7 @@ package com.rudra.realspeedtest.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// Primary brand palette
 val Green500 = Color(0xFF4CAF50)
 val Green700 = Color(0xFF388E3C)
 val Green200 = Color(0xFFA5D6A7)
@@ -41,8 +42,12 @@ val Indigo700 = Color(0xFF303F9F)
 val Pink500 = Color(0xFFE91E63)
 val Pink700 = Color(0xFFC2185B)
 
+// Neutral palette
+val Gray50 = Color(0xFFFAFAFA)
 val Gray100 = Color(0xFFF5F5F5)
+val Gray150 = Color(0xFFF0F0F0)
 val Gray200 = Color(0xFFEEEEEE)
+val Gray250 = Color(0xFFE8E8E8)
 val Gray300 = Color(0xFFE0E0E0)
 val Gray400 = Color(0xFFBDBDBD)
 val Gray500 = Color(0xFF9E9E9E)
@@ -51,26 +56,34 @@ val Gray700 = Color(0xFF616161)
 val Gray800 = Color(0xFF424242)
 val Gray900 = Color(0xFF212121)
 
+// Backgrounds
 val LightBackground = Color(0xFFF8FAFC)
-val DarkBackground = Color(0xFF121212)
-val DarkSurface = Color(0xFF1E1E1E)
+val DarkBackground = Color(0xFF0F0F0F)
+val DarkSurface = Color(0xFF1A1A2E)
+val DarkSurfaceVariant = Color(0xFF16213E)
 val CardLight = Color(0xFFFFFFFF)
-val CardDark = Color(0xFF2D2D2D)
+val CardDark = Color(0xFF1E1E2E)
 
+// Speed quality colors
 val ExcellentColor = Color(0xFF22C55E)
 val GoodColor = Color(0xFF10B981)
 val FairColor = Color(0xFFF59E0B)
 val PoorColor = Color(0xFFF97316)
 val BadColor = Color(0xFFEF4444)
 
+// Gradients
 val GradientStart = Color(0xFF22C55E)
 val GradientEnd = Color(0xFF3B82F6)
 val GaugeBackground = Color(0xFFE2E8F0)
+val GaugeBackgroundDark = Color(0xFF2A2A3E)
 
-val SurfaceVariant = Color(0xFFF1F5F9)
-val OnSurfaceVariant = Color(0xFF64748B)
+// Surface colors
+val SurfaceVariantLight = Color(0xFFF1F5F9)
+val SurfaceVariantDark = Color(0xFF1E293B)
+val OutlineLight = Color(0xFFE2E8F0)
+val OutlineDark = Color(0xFF334155)
 
-val CartoonBorder = Color(0xFF000000)
-val CartoonShadow = Color(0x40000000)
-val CartoonText = Color(0xFF000000)
-val CartoonWhite = Color(0xFFFFFFFF)
+// Elevation overlay colors (for shadows/elevations in dark mode)
+val ElevationOverlay1 = Color(0x08000000)
+val ElevationOverlay2 = Color(0x0F000000)
+val ElevationOverlay3 = Color(0x1A000000)
