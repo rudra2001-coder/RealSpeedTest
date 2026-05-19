@@ -30,11 +30,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
 
-class SpeedTestViewModel(context: Context) : ViewModel() {
+class SpeedTestViewModel(private val context: Context) : ViewModel() {
 
     private val engine = SpeedTestEngine(context)
     private val historyRepository = TestHistoryRepository(context)
@@ -64,8 +65,11 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
     private val _selectedTab = MutableStateFlow(0)
     val selectedTab: StateFlow<Int> = _selectedTab.asStateFlow()
 
-    private val _isDarkMode = MutableStateFlow(false)
-    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
+    private val _isDarkMode = MutableStateFlow<Boolean?>(null)
+    val isDarkMode: StateFlow<Boolean?> = _isDarkMode.asStateFlow()
+
+    private val _darkModeFollowSystem = MutableStateFlow<Boolean?>(null)
+    val darkModeFollowSystem: StateFlow<Boolean?> = _darkModeFollowSystem.asStateFlow()
 
     private val _isAutoTestEnabled = MutableStateFlow(false)
     val isAutoTestEnabled: StateFlow<Boolean> = _isAutoTestEnabled.asStateFlow()
@@ -78,6 +82,9 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
 
     private val _testMode = MutableStateFlow(TestMode.QUICK)
     val testMode: StateFlow<TestMode> = _testMode.asStateFlow()
+
+    private val _errorState = MutableStateFlow<String?>(null)
+    val errorState: StateFlow<String?> = _errorState.asStateFlow()
 
     private var autoTestJob: Job? = null
     private var autoTestTimer: Timer? = null
@@ -106,14 +113,29 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
                     if (result.isThrottled) triggerThrottlingAlert()
                     if (_isAutoTestEnabled.value) checkSpeedThreshold(result)
                     triggerHapticFeedback()
-                    _isTestRunning.value = false
+                } else {
+                    _errorState.value = "Test failed to complete"
                 }
+                _isTestRunning.value = false
             }
         }
         // Read persisted preferences
         viewModelScope.launch {
             preferencesManager.darkMode.collect { isDark ->
                 _isDarkMode.value = isDark
+            }
+        }
+        viewModelScope.launch {
+            preferencesManager.darkModeFollowSystem.collect { follow ->
+                _darkModeFollowSystem.value = follow
+            }
+        }
+        // Migration: existing users with a stored dark_mode preference should not auto-follow system
+        viewModelScope.launch {
+            val hasManualPref = preferencesManager.darkMode.first() != null
+            val hasFollowPref = preferencesManager.darkModeFollowSystem.first() != null
+            if (hasManualPref && !hasFollowPref) {
+                preferencesManager.setDarkModeFollowSystem(false)
             }
         }
     }
@@ -151,8 +173,16 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
         _isTestRunning.value = true
         _currentResult.value = null
         _currentResults.value = emptyList()
+        _errorState.value = null
 
-        engine.startLiveTest(viewModelScope)
+        viewModelScope.launch {
+            try {
+                engine.startLiveTest(viewModelScope)
+            } catch (e: Exception) {
+                _errorState.value = e.message ?: "Test failed unexpectedly"
+                _isTestRunning.value = false
+            }
+        }
     }
 
     fun startLiveTest() = startTest()
@@ -316,16 +346,34 @@ class SpeedTestViewModel(context: Context) : ViewModel() {
 
     fun toggleDarkMode() {
         viewModelScope.launch {
-            val newValue = !_isDarkMode.value
-            preferencesManager.setDarkMode(newValue)
-            _isDarkMode.value = newValue
+            val followSystem = _darkModeFollowSystem.value ?: (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            if (followSystem) {
+                preferencesManager.setDarkModeFollowSystem(false)
+                _darkModeFollowSystem.value = false
+                val mode = context.resources.configuration.uiMode
+                val isSystemDark = (mode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                        android.content.res.Configuration.UI_MODE_NIGHT_YES
+                preferencesManager.setDarkMode(!isSystemDark)
+                _isDarkMode.value = !isSystemDark
+            } else {
+                val newValue = !(_isDarkMode.value ?: false)
+                preferencesManager.setDarkMode(newValue)
+                _isDarkMode.value = newValue
+            }
         }
     }
 
-    fun setDarkMode(enabled: Boolean) {
+    fun setDarkMode(enabled: Boolean?) {
         viewModelScope.launch {
             preferencesManager.setDarkMode(enabled)
             _isDarkMode.value = enabled
+        }
+    }
+
+    fun setDarkModeFollowSystem(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesManager.setDarkModeFollowSystem(enabled)
+            _darkModeFollowSystem.value = enabled
         }
     }
 
